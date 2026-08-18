@@ -1,4 +1,4 @@
 interface:
   display_name: "Scientific Work"
-  short_description: "PhD papers, term notes, and COMSOL workflows"
-  default_prompt: "Use $scientific-work to analyze a paper, explain a term, or update an Obsidian note."
+  short_description: "Research, engineering notes, papers, and COMSOL"
+  default_prompt: "Use $scientific-work to analyze a paper, explain a technical topic, or update an Obsidian note."

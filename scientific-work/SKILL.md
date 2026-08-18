@@ -1,6 +1,6 @@
 ---
 name: scientific-work
-description: Work with the user's general PhD, scientific research materials, and technical Obsidian notes. Use for научная работа, аспирантура, статьи, обзоры литературы, научные заметки, technical term questions that should become Obsidian notes, general modeling workflow, paper translation/analysis, and planning research next steps from the local vault. For specialized plasmonics, nanophotonics, SPP/DLSPP/LR-DLSPP, PCM photonics, EIM/ЭДП, optical antennas, or photonic COMSOL/FEM/CST mode-analysis tasks, use `plasmonics-photonics`.
+description: Work with the user's general PhD, scientific research materials, engineering explanations, and technical Obsidian notes. Use for научная работа, аспирантура, статьи, обзоры литературы, научные заметки, technical term questions, datasheet-based component selection or circuit explanations that should be saved to Work\Database, general modeling workflow, paper translation/analysis, and planning research next steps from the local vault. For specialized plasmonics, nanophotonics, SPP/DLSPP/LR-DLSPP, PCM photonics, EIM/ЭДП, optical antennas, or photonic COMSOL/FEM/CST mode-analysis tasks, use `plasmonics-photonics`.
 ---
 
 # Scientific Work (Codex adapter)
