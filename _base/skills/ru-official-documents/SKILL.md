@@ -29,7 +29,9 @@ Never write a personal observation the signatory did not make. Sentences like «
 Two sources are allowed instead:
 
 1. **Facts backed by a document** — dates, оценки, названия докладов, приказы, объём программы, решения кафедры.
-2. **The stock evaluative formulas of the genre**, which are expected and carry no claim of personal insight: «имеет неконфликтный характер», «отличается высоким уровнем ответственности и трудолюбия», «в коллективе пользуется уважением и авторитетом», «проявил ответственность и добросовестность», «зарекомендовал себя дисциплинированным и инициативным».
+2. **The stock evaluative formulas of the genre**, which are expected and carry no claim of personal insight: «в коллективе пользуется уважением и авторитетом», «проявил ответственность и добросовестность», «зарекомендовал себя добросовестным и инициативным сотрудником», «отличается высоким уровнем ответственности и трудолюбия, требователен к себе», «доброжелателен и корректен в общении с коллегами, терпелив в работе со студентами, легко включается в работу коллектива».
+
+When several such formulas are combined, split them by audience instead of repeating an adjective: «корректен в общении с коллегами» plus «терпелив в работе со студентами» reads cleanly, while two clauses both ending in «с коллегами и студентами» do not. For a teaching post, at least one clause should mention students.
 
 When a characterisation is genuinely needed, lift the wording from an existing signed отзыв — отчёт по педагогической практике, аттестация аспиранта, отзыв руководителя ВКР. «Справился с задачами, приобрёл необходимые навыки и компетенции» is a real sentence from a real form; an invented equivalent is not.
 
