@@ -18,8 +18,33 @@ Use this reference for COMSOL, CST, FEM, mode analysis, `.mph`, Java automation,
 ## Reporting
 
 - Distinguish observed results from hypotheses.
-- Include plots or exported values only when they support a decision.
 - Write conclusions as next modeling actions: what to refine, compare, sweep, or verify.
+- Be sparing with plots of DERIVED quantities: a curve earns its place when it supports a
+  decision, not because the data existed.
+
+**A report on a computation must show the model, not only numbers** (explicit user requirement,
+2026-08-26). Tables of effective indices and losses are unreadable as a description of what was
+actually built, and a reader cannot tell a correct model from a wrong one without seeing it.
+
+- Every modelling note carries at least two pictures exported FROM THE SOLVER: the structure as
+  it was built - the permittivity or material map, which is the geometry after meshing and
+  material assignment - and the field of the working solution. Keep the solver's own title
+  strip: it carries the frequency and the effective mode index, and that is what ties the
+  picture to the table.
+- **A hand-drawn schematic does not substitute for the export, and the export does not
+  substitute for the schematic.** The schematic shows what was intended, at a scale and with
+  labels a person can read; the export shows what was actually solved. Publishing only the
+  schematic is how a geometry error survives review - the 110 nm buffer of 2026-08-25 was drawn
+  correctly in every schematic while the solver had something else.
+- **Choose the view that shows the feature under discussion.** A lateral taper needs a top view,
+  a vertical step needs a side view, a mode needs the cross-section. The default view a tool
+  picks usually shows none of them, and a picture of the wrong plane is worse than none because
+  it still looks like evidence. When the feature is three-dimensional, show two planes.
+- When variants are compared, export at least the baseline and the winner. A bar chart of the
+  comparison is not a picture of the models.
+- Frame and brighten afterwards when the exporter cannot - mechanics are in the traps section
+  and in `scripts/` - but never crop away a field picture's title strip, which is its
+  provenance.
 
 ## Automation
 
