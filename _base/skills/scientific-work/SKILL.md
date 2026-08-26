@@ -152,6 +152,13 @@ requirement, 2026-08-26).
     script must contain **no anonymous inner classes** (otherwise the run dies with "Error
     running java class - Detail: Foo$1"), and the bundled compiler predates effectively-final
     capture, so anything a nested construct touches has to be declared `final` explicitly.
+  - `scripts/Publish-ComputeFolder.ps1` moves a whole local computation folder into the vault:
+    it copies the sources, result tables and figures, runs the models through the stripper, and
+    writes a `MANIFEST.md` saying where the copy came from. It leaves behind batch debris
+    (`.class`, `.status`, `.recovery`, `*_Model.mph`) and dense field exports. The bulk filter is
+    by SIZE, not by name - `-MaxCsvMB` defaults to 1 MB - because these dumps arrive under a new
+    name from every script, while a table a person reads is kilobytes and a sampled field is
+    megabytes. On the 2026-08 queue that separated 21 MB worth keeping from 100 MB regenerable.
   - `scripts/Find-ExistingPaperPdf.ps1` checks whether a paper PDF already exists in the vault before downloading, using DOI, DOI-safe fragments, DOI suffixes, year, and stable title words; use it before browser or publisher downloads to avoid duplicates.
   - `scripts/Download-OpenAccessPapers.ps1` downloads legitimately available open-access PDFs from DOI lists by querying OpenAlex/Crossref, validating PDF signatures, and writing a JSON manifest. It does not bypass paywalls or use university credentials; use the browser workflow in `references/paper-analysis.md` when the user wants to authenticate through institutional access.
   - `scripts/Install-ObsidianLocalRestApi.ps1` installs or updates the Obsidian Local REST API plugin release files inside the synced vault.
