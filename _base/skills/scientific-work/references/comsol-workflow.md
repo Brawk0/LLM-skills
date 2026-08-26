@@ -266,8 +266,16 @@ probe before paying for any solve).
   plane. A box alone cannot separate the wedge's footprint from the rest of the same plane,
   because both reach the same outer edge. The probe returns exactly one face when it is right.
 - A taper in the third dimension costs nothing extra: a transition boundary condition takes an
-  expression for `d`, so `t_metal*max(z/l_wedge, 0.05)` thins the film toward the tip. Keep the
-  floor - a zero-thickness sheet impedance is singular.
+  expression for `d`, so the film can thin toward the tip. **Clamp that expression at BOTH ends**:
+  `t_metal*min(max(z/l_wedge, 0.05), 1)`. The condition is applied to the whole metal face, and
+  the face does not end where the wedge does - without the upper clamp the film goes on thickening
+  along the uniform section behind it, and the structure being measured is not the one intended.
+  The lower floor matters too: a zero-thickness sheet impedance is singular.
+- **When two variants that should differ give the same answer, the thing you varied is not what
+  dominates.** Two thickness tapers whose tips differed by a factor of ten agreed to three digits
+  (2026-08-26); the tips were irrelevant because both shared a runaway film behind the wedge. A
+  suspiciously equal pair is a bug report, not a physical result - look at what the variants have
+  in common, not at what separates them.
 - Probe the geometry first, in a program that builds and reports domain, boundary and selected
   face counts and solves nothing. It costs seconds and settles which primitive to use before a
   twenty-minute solve tests the wrong thing.
