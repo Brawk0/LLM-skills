@@ -245,6 +245,42 @@ shifter, COMSOL 6.2).
   value - Property: size (Preset)" and, if the call is inside a try block, silently produces no
   picture. Surface plots do export headlessly; Geometry and Mesh plot features still do not.
 
+## Showing That A 3D Model Is 3D
+
+A cut plane through a 3D solution is indistinguishable from a 2D calculation, and a reader who
+sees only cut planes will say - correctly, on the evidence - that no 3D result has been shown
+(user, 2026-08-26). Volume views cost one extra export from a run that already happened.
+
+- `PlotGroup3D` and its features DO export from a headless batch run: `Surface` (with a
+  `Transparency` subnode), `Multislice`, `Isosurface`. This is worth stating because `Geometry`
+  and `MeshPlot` still do not.
+- Four views answer four different doubts, and they are cheap once the solution exists: the
+  computational domain in perspective with transparent walls, so the buried feature is visible as
+  a body; only the bodies of the device, without the surrounding air, so the structure is legible;
+  a multislice, which no 2D model can produce; isosurfaces, which show where the mode sits.
+- Give every surface in one picture the SAME manual colour range (`rangecoloractive`,
+  `rangecolormin`, `rangecolormax`) and one legend. With per-feature auto-ranges the same field
+  value is painted differently on each body, and the picture misleads.
+- Select the bodies with a `Selection` subnode on the plot feature, pointing at the geometry's own
+  boundary selections (`geom1_<tag>_bnd`). Blocks only publish those when `selresultshow` is
+  `"all"`; the default `"dom"` gives domains only.
+- **`zoomextents` on the image export silently overrides the camera.** Two runs with different
+  `view("view1").camera().set("position", ...)` produced pixel-identical pictures and threw
+  nothing. Either accept the framing the automatic zoom picks, or turn `zoomextents` off and place
+  the camera by hand, but do not expect both.
+- When a model is 3D, say so in the note next to the numbers - elements, ports, what the ports
+  solve - and label the slices as slices. The pictures and the sentence do different jobs.
+
+## Units In Expressions Are Not The Model's Length Unit
+
+A bare number in a COMSOL expression is in SI base units, whatever the geometry's length unit is
+set to. A mask written as `(y>0.01)*(y<0.17)` and meant as micrometres asks for "above one
+centimetre", which is false everywhere; the integral then returns exactly zero, with no error and
+no warning (2026-08-26). Write the units: `(y>0.01[um])*(y<0.17[um])`.
+
+An integral that is exactly `0.000000000e+00` at every sample point is not a physical result. It
+means the integrand was identically zero, and a masking condition is the usual reason.
+
 ## Building A Wedge As A Solid
 
 A tapered feature drawn as a staircase of blocks is a fallback, not the shape. Two routes give a
