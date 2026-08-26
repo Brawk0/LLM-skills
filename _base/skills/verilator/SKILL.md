@@ -75,7 +75,7 @@ of ours; none was a limitation of Verilator.
 
 ### The rule that follows from them
 
-**The trust was earned, not assumed.** After the six fixes above, the same testbench over 80 ms of model time gives `full_view_fires=11357 sector_fires=7326 total=18683 errors=0 ALL PASS` in **both** simulators, and a 1.2 ms differential trace matches on all 506 375 recorded rows. Verilator took 22 s where ModelSim took 49 min — but the number only became worth having once it was the same number.
+**The trust was earned, not assumed.** After the six fixes above, the same testbench over 80 ms of model time gives `full_view_fires=11357 sector_fires=7326 total=18683 errors=0 ALL PASS` in **both** simulators, down to the nanosecond timestamps of the angle-step warnings, and a 1.2 ms differential trace matches on all 506 375 recorded rows. Verilator took 21.9 s where ModelSim took 43 min 48 s — but the number only became worth having once it was the same number.
 
 **Before comparing two simulators, make sure they are being fed the same stimulus.** A testbench that drives inputs on the edge the design samples is not a valid reference for either tool, and the first divergence you find will be in the input, not the design. Drive stimulus in the opposite phase.
 
