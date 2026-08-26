@@ -245,6 +245,24 @@ shifter, COMSOL 6.2).
   value - Property: size (Preset)" and, if the call is inside a try block, silently produces no
   picture. Surface plots do export headlessly; Geometry and Mesh plot features still do not.
 
+## Run One Batch At A Time
+
+Two `comsolbatch` processes on one machine do not merely share the CPU - they corrupt the run.
+Both append to the same result and profile CSVs, so rows interleave and duplicate; both write the
+same status file, so the log becomes unreadable; and each takes several times longer than it
+would alone, because they contend for memory and cores. Seen twice: once on a mode sweep, once on
+a nine-case shape scan where the wall-clock per case went from 3 minutes to 50 and four cases died
+outright (2026-08-26).
+
+- Serialize every sweep in ONE script with a plain loop. Do not launch a second script "to use the
+  idle cores" - there are none.
+- Guard the loop: check for a running `comsolbatch` before starting and abort if one is up. A
+  four-line guard is cheaper than discovering the duplication in the numbers afterwards.
+- After killing a runaway sweep, confirm the process is actually gone before restarting. A stopped
+  shell does not always take its child batch with it.
+- Symptoms in the data, in order of how early they show: duplicated scheme rows in the result CSV,
+  interleaved half-lines in the batch log, per-case times several times the expected one.
+
 ## Showing That A 3D Model Is 3D
 
 A cut plane through a 3D solution is indistinguishable from a 2D calculation, and a reader who
