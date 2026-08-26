@@ -220,6 +220,33 @@ shifter, COMSOL 6.2).
   value - Property: size (Preset)" and, if the call is inside a try block, silently produces no
   picture. Surface plots do export headlessly; Geometry and Mesh plot features still do not.
 
+## Building A Wedge As A Solid
+
+A tapered feature drawn as a staircase of blocks is a fallback, not the shape. Two routes give a
+real solid with a straight edge, and both work in 6.2 (checked 2026-08-26 with a geometry-only
+probe before paying for any solve).
+
+- **`Hexahedron` with eight explicit vertices** is the simplest. A wedge whose footprint runs from
+  a tip at one end out to full width and then straight to the far end is a QUADRILATERAL prism,
+  so no vertex has to be degenerate. Set `p` as a 3x8 matrix, rows x/y/z, bottom face first.
+- **`WorkPlane` + `Polygon` + `Extrude` also works** - the earlier failure ("Object not allowed in
+  selection - Object: wp1") was not the API but the order: the work plane has to be RUN
+  (`geom("geom1").run("wp1")`) before the extrude will accept it as input. The polygon also needs
+  `set("type", "solid")`, otherwise it is a curve and there is nothing to extrude.
+- Let Form Union partition the surrounding block with the wedge instead of subtracting it. The
+  interface then splits exactly along the wedge edge, and the face under the wedge is the one to
+  put a boundary condition on.
+- Select that face as an `Intersection` selection of the wedge's own boundary selection
+  (`geom1_<tag>_bnd`, needs `selresult on` and `selresultshow "all"`) with a thin `Box` at the
+  plane. A box alone cannot separate the wedge's footprint from the rest of the same plane,
+  because both reach the same outer edge. The probe returns exactly one face when it is right.
+- A taper in the third dimension costs nothing extra: a transition boundary condition takes an
+  expression for `d`, so `t_metal*max(z/l_wedge, 0.05)` thins the film toward the tip. Keep the
+  floor - a zero-thickness sheet impedance is singular.
+- Probe the geometry first, in a program that builds and reports domain, boundary and selected
+  face counts and solves nothing. It costs seconds and settles which primitive to use before a
+  twenty-minute solve tests the wrong thing.
+
 ## Data-Hygiene For Material Tables
 
 - **Tabulated optical constants are downloaded once and treated as source of truth.** Fetch scripts must be idempotent: refuse to overwrite the local CSV unless `--force` is passed, and every downstream script (Mie reference, COMSOL interpolation, plotting) must read the local file with no network call. Re-fetching on every run breaks reproducibility and hides silent format changes from refractiveindex.info / other upstream sources. Include a spot-check of a known value (e.g. Au Johnson-Christy: `n≈0.43, k≈2.455 at 548.6 nm`) at the top of the fetch script and in the README so a corrupted file is caught immediately (learned 2026-07-31).
