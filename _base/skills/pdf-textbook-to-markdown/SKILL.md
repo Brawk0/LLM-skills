@@ -88,3 +88,14 @@ After materially updating this skill, validate it when feasible, then commit and
 Before materially editing this skill, applying self-learning updates, or publishing changes, run a lightweight freshness check like the NTO skill policy: fetch `origin main`, compare local `HEAD` with `origin/main`, fast-forward if local is behind and the relevant working tree is clean, and inspect dirty/ahead/diverged states before continuing. Leave unrelated user changes unstaged; stop and report only when target skill files or repository state make the intended update unsafe to determine.
 
 If publishing encounters remote changes or merge conflicts, resolve them autonomously when the intended final meaning can be determined from the local changes, remote changes, commit history, and the user's instruction. Preserve compatible rules from both sides, consolidate duplicates, rerun validation, commit the resolved result, and push. Stop only when resolution would require guessing unavailable technical meaning, exposing protected content, discarding user work, or using unavailable repository permissions.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.

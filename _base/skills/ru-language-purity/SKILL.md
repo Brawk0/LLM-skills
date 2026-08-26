@@ -139,3 +139,14 @@ This skill is the source-of-truth safety copy and is also mirrored into a
 downstream corporate skills repository so corporate skills can reference it.
 Keep this copy; if corporate publishing, permissions, sync, or merge fails,
 preserve and report this copy.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.

@@ -329,3 +329,14 @@ Use this skill for general rules about skill storage and synchronization. Use do
 - Christian, church, Bible, Sunday school, youth, sermon, camp, and devotional deck content rules: `christian-presentations`, used alongside `presentation-creation`;
 - presentation-specific behavior for research talks: `scientific-work/references/presentation-workflow.md`, used alongside `presentation-creation` when relevant;
 - Obsidian REST/MCP bridge details: `scientific-work/references/obsidian-ai-integration.md`.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.

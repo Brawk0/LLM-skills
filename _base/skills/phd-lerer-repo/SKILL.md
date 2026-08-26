@@ -82,3 +82,14 @@ If push fails because of credentials, remote permissions, or network issues, kee
 ## Skill Learning
 
 When work with `phd_lerer` reveals a reusable repository convention, use the `skill-learning` policy and update this skill or the relevant domain skill. Do not store secrets, credentials, private raw datasets, unpublished full measurements, bulky generated solver files, or one-off project facts in the skill.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.
