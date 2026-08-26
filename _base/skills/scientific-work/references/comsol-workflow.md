@@ -245,6 +245,40 @@ shifter, COMSOL 6.2).
   value - Property: size (Preset)" and, if the call is inside a try block, silently produces no
   picture. Surface plots do export headlessly; Geometry and Mesh plot features still do not.
 
+## A Coarse Mesh Fails Catastrophically, Not Gradually
+
+The habit of thinking "a coarse mesh shifts the answer a little" is wrong for the frequency
+domain, and believing it costs whole result sets. On a periodic absorber cell at roughly 3.7
+second-order elements per wavelength, absorption came out **0.33 where the exact answer was 0.77**
+- a 57 % error - at scattered wavelengths, while neighbouring wavelengths on the same mesh were
+right to 2 % (2026-08-26). Refining to 5 per wavelength fixed it to 0.9 %.
+
+What makes this dangerous is the shape of the failure, not its size:
+
+- **It is deterministic.** Re-running the bad point reproduces it to six digits, so it does not
+  look like a numerical accident.
+- **It is silent.** No solver warning, no convergence message, solve time identical to the good
+  points.
+- **It is wavelength-selective**, so a sweep comes out jagged - and a jagged absorption curve
+  reads as a grating resonance. On this structure the failures even sat near a real Rayleigh
+  anomaly, so a physical explanation was available and wrong.
+- **It survives every plausible check except the right one.** Diffraction orders, port distance,
+  buffer size and repeat runs were all ruled out before the mesh was tested.
+
+Practical rules:
+
+- Keep at least 5 second-order elements per wavelength IN THE MATERIAL, computed with the local
+  index, not the vacuum wavelength. A high-index absorbing layer needs a much finer mesh than the
+  air above it, and it is the layer that carries the answer.
+- Sweeping a model means sweeping the mesh requirement with it. A mesh sized at the long-wave end
+  of a band is not a mesh for the short-wave end, and the index of a dispersive material can move
+  the requirement further than the wavelength does.
+- Never publish a swept curve without at least one point checked against an exact answer, and
+  prefer a configuration that HAS one: strip the structure down to a layered stack and compare
+  with a transfer matrix. A ladder that ends at "the empty cell is right" is not enough - the
+  empty cell is right for trivial reasons.
+- When a sweep looks jagged, test the mesh before inventing physics for it.
+
 ## Run One Batch At A Time
 
 Two `comsolbatch` processes on one machine do not merely share the CPU - they corrupt the run.

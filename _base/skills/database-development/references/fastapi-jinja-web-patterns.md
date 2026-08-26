@@ -200,6 +200,90 @@ Two clean fixes:
 
 Do NOT do the string-formatting workaround (`"IN (" + ",".join(...) + ")"` with values sql-quoted by hand) — you leak SQL-injection through the first field that comes from user input. Always parametrise.
 
+## Time: one timezone for the whole app
+
+### Naive local timestamps + UTC server = a silent offset
+
+Schedules are usually stored as **wall-clock** time split into `date` + `time`
+columns (a lesson at 18:00 stays at 18:00 after a DST change — that is the
+point). Those values carry no timezone. The server almost always runs UTC.
+Comparing the two silently shifts everything by the UTC offset.
+
+The trap is that PostgreSQL does not complain. `timestamp < timestamptz`
+implicitly casts the naive side **to the session timezone**:
+
+```sql
+-- both wrong on a UTC server when the times are local wall clock
+WHERE (lesson_date + start_time) < now()                       -- silent cast
+WHERE (lesson_date + start_time) < now() AT TIME ZONE 'UTC'    -- explicitly UTC
+```
+
+Symptoms are indirect and easy to misdiagnose: a "check every N minutes" poller
+looks like it only runs on page load, reminder pushes arrive hours late, a
+badge counter stays at zero. The user reports the *symptom* ("the dialog only
+appears when I log in"), and fixing the symptom adds a second timer that
+changes nothing.
+
+### Fix: compute "now" in the app, pass it as a parameter
+
+Do not put `now()` inside the query — it resolves in the database's timezone.
+One declared timezone, one helper, parameters everywhere:
+
+```python
+APP_TZ = ZoneInfo(os.environ.get("APP_TZ", "Europe/Moscow"))
+
+def local_now() -> datetime:      # naive, same shape as what is in the DB
+    return datetime.now(APP_TZ).replace(tzinfo=None)
+
+def local_today() -> date:
+    return local_now().date()
+```
+
+Then `... < %s` with `local_now()`. Behaviour no longer depends on the server's
+`timedatectl` or the database's `TimeZone`.
+
+Also replace `date.today()` with `local_today()`: on a UTC server, between
+midnight and the UTC offset, "today" is still yesterday for the user.
+
+Grep for all of these when auditing: `now()`, `AT TIME ZONE`, `utcnow()`,
+`date.today()`. One user-visible complaint usually means several silent ones.
+
+### Mobile polling: interval alone is not enough
+
+Two independent reasons a browser poll stops working on a phone:
+
+- **Suspended timers.** Mobile browsers throttle or freeze `setInterval` in a
+  backgrounded tab. Pair every poll with a `visibilitychange` listener that
+  re-checks when the tab becomes visible again.
+- **Cached responses.** A polled `GET` is cacheable; a cached empty list means
+  the dialog never appears. Set `Cache-Control: no-store` on the response *and*
+  `fetch(url, {cache: 'no-store'})` on the client — a tell-tale user report is
+  "it appeared after I cleared the cache".
+
+```javascript
+setInterval(check, 60000);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') check();
+});
+```
+
+## Tables that are read on a phone
+
+Grouping rows under a per-group heading (`<h2>date</h2>` + its own table)
+duplicates the header for every group and eats a phone screen. One table, one
+header row, and the grouping value as the **first column printed only on the
+first row of each group**, with a heavier border between groups. Reads better
+and scrolls less.
+
+When a filter pins a column to a single value (one teacher, one status), drop
+that column: it repeats what the filter already says, and horizontal space is
+the scarcest resource on a phone.
+
+A filter that answers "why did this user open the page" should come
+pre-applied: if a specialist opens a shared calendar to see their own schedule,
+default the filter to them (via the `staff.user_id → users.id` link) and leave
+an explicit way to clear it.
+
 ## Deployment
 
 ### One-command deploy script that reads env

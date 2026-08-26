@@ -30,3 +30,14 @@ This Google Drive copy exists so the skill is reachable from other workspaces.
 When a new verified fact appears during RTL work, write it into the project copy
 first, then re-sync this folder from it. If the two ever disagree, the project
 repository wins — it is the one edited during real hardware sessions.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.

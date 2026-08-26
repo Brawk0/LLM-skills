@@ -171,3 +171,14 @@ When a claim needs a source, prefer local material. Reach for the web only for b
 When work reveals a durable, reusable rule (new synonym for the abbreviation table, a common failure mode when quoting, a lesson about which local source is authoritative), use the `skill-learning` policy. Save compact rules here or in `references/`. Do not store private pastoral content, personal counseling details, copyrighted book text beyond short necessary excerpts, or one-off facts.
 
 Before materially editing this skill, run the owning repo's freshness check: fetch `origin main`, compare `HEAD` with `origin/main`, fast-forward if clean. After material updates, commit and push by default unless the user says otherwise. Stage only relevant files; split commits by semantic block.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.

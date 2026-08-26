@@ -55,3 +55,14 @@ The firmware checkout is authoritative for runtime code. This Google Drive copy 
 - Snapshot metadata: `references/source.md`
 
 When refreshing the mirror, first update and inspect the MCU repository, then replace the entire plugin snapshot from the project source. Compare relative file lists and hashes, scan for credentials or generated logs, run `python launcher.py --check`, and validate both the shared skill and Codex adapter. Make runtime changes in the MCU repository first, then recopy them here so the two copies do not silently diverge.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.
