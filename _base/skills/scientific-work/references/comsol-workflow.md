@@ -35,6 +35,26 @@ Use this reference for COMSOL, CST, FEM, mode analysis, `.mph`, Java automation,
 - In COMSOL mode-analysis tables, the displayed sign of `Im(n_eff)` or `Im(beta)` can follow the chosen time-dependence convention. When converting to attenuation, propagation length, or insertion loss, use the positive attenuation value, usually `abs(Im(n_eff))` or `abs(Im(beta))`, and state this convention in the note.
 - For finite/open plasmonic waveguide checks without a full boundary-convergence study, label the result as diagnostic. Record domain size, boundary treatment, mesh settings, and the missing convergence checks before comparing it to analytic or EDP results.
 
+## Keeping Models
+
+A model that exists only in a local scratch folder will be lost. The rule is in the skill's
+"Computational Artifacts Leave The Local Disk" section; the COMSOL mechanics are here.
+
+- Run with `-nosave` while iterating, but produce and keep one saved `.mph` per model family when
+  the work is finished. An env-gated `model.save(...)` just before `ModelUtil.remove(tag)` costs
+  nothing and makes that reproducible on demand.
+- Strip before syncing with `scripts/Compress-MphModel.ps1`. Measured on this vault: a solved
+  3D scattering model 181 MB -> a few MB, a 2D periodic cell 16.9 MB -> 0.5 MB, i.e. 2-5 %.
+  The strip clears `model.sol(tag).clearSolutionData()`, `mesh(tag).clearMesh()`,
+  `result().table(tag).clearTableData()` and `model.resetHist()`. History alone is often the
+  largest single contributor.
+- The stripped file still opens, still shows the geometry and every setting, and re-solves with
+  one Compute. That is what makes it worth keeping next to the note rather than a screenshot.
+- Keep the `.java` next to the `.mph`. The script is the authoritative definition; the model is
+  the convenient one.
+- Do not sync the debris a batch run leaves: `.class`, `.status`, `.recovery`, `<Class>_Model.mph`
+  duplicates, and logs of successful runs.
+
 ## Java Model API — Recurrent Traps
 
 Lessons from writing a headless 3D scattering model on COMSOL 6.2 (learned 2026-07-31, driving `sphere_vacuum.java` for Level-1 Mie validation). Batch typically prints exit code 0 on model-build errors — always read the tail of `-batchlog` for `/*Error*/` and expected output files.
@@ -84,6 +104,121 @@ Lessons from writing a headless 3D scattering model on COMSOL 6.2 (learned 2026-
 - **Correct property names for an image-export node** (obtained from `model.result().export(tag).properties()`, 92 entries — use that call rather than guessing): `sourcetype` = `"plotgroup"`, `sourceobject` = plot-group tag, `imagetype` = `"png"`, `pngfilename`, `unit` = `"px"`, `width`, `height`, `lockratio`, `antialias`, `zoomextents`. There is **no** `background` or `backgroundcolor` property, and no `plotgroup` property — setting either throws `Unknown property` and takes down the whole export node, which reads as if the export type itself were wrong.
 - **Before blaming the solver for a few-percent mismatch against an analytic reference, remove the comparison artefacts.** Two of them cost 15 % on the Au-sphere Mie validation and looked exactly like physics: (a) the reference was computed on a round wavelength grid and *interpolated* onto COMSOL's points — but COMSOL's `range()` sweep is uniform in frequency, hence non-uniform in wavelength, and linear interpolation across a 25 nm step shaves the LSPR peak; (b) the two sides used different interpolation schemes for the same tabulated `n(λ), k(λ)`. Fix (a) by computing the reference at exactly the solver's wavelengths, (b) by matching the scheme. **COMSOL's `interp="piecewisecubic"` is monotone piecewise-cubic Hermite = `scipy.interpolate.PchipInterpolator`, NOT `CubicSpline`** — measured max error on σ_sca: linear 3.57 %, natural cubic spline 1.85 %, PCHIP 0.34 % (σ_abs: 5.55 % / 3.26 % / 0.04 %). Only after both are matched does the residual represent actual FEM discretization error (learned 2026-08-11).
 - **Rule of thumb for a systematic multiplicative error: suspect the source, not the mesh.** A factor-of-N discrepancy that survives halving the mesh size, doubling the domain, and disabling the PML entirely is not a discretization error. In this case refining `h_Au` from 3 nm to 1 nm plus 4 boundary layers changed σ_abs by <0.01 %, doubling `d_air` made it worse, and removing the PML changed nothing — all three "converged" on the wrong answer because the excitation itself was ill-posed.
+
+## Mode Analysis And Periodic Cells - Recurrent Traps
+
+Lessons from the 2026-08-25 queue run on COMSOL 6.2: an LR-DLSPPW baseline, an Ag-strip
+convergence study, a coupled thin-film study and a biperiodic metasurface cell.
+
+- **A "lossless metal" is a metal with zero imaginary PERMITTIVITY, not zero `k`.** Setting
+  `ki = 0` while keeping `n = 0.6389` turns gold into a dielectric with `eps = +0.41`: a
+  low-index slot, not a plasmonic layer. The field fraction inside it jumped from `1e-4` to
+  `0.12` and the whole branch changed character. Convert properly instead: for
+  `eps = (0.6389 + 11.1748i)^2 = -124.468 + 14.279i`, the lossless counterpart is
+  `eps = -124.468`, i.e. `n = 0`, `k = sqrt(124.468) = 11.156521`. The same applies to any
+  "switch the loss off" experiment on a metal.
+- **A periodic `Port` launches its `Pin` (default `1[W]`), not the amplitude in `Eampl`.**
+  `Eampl` only fixes the polarisation of the port mode. Normalising reflectance and absorption
+  by `0.5*E0^2/Z0_const*Area` is therefore wrong by the ratio of 1 W to the cell's actual
+  plane-wave power - fifteen orders of magnitude for a 500 nm cell. Set `Pin` explicitly and
+  divide the integrals by it. Read the port's real settings with
+  `model.component("comp1").physics("ewfd").feature("port1").properties()` (42 entries in 6.2)
+  rather than guessing names; `PortExcitation`, `Pin`, `InputType`, `PortSlit` and `n` are the
+  ones that matter.
+- **Recompile before every batch run, and verify the switch you just added actually switched.**
+  A new environment-variable override was added to a Java model and the run launched without
+  `comsolcompile`, so the old class ran and silently ignored it. The "lossless metal" study
+  therefore ran with almost the original metal and produced the opposite conclusion, which
+  looked physically interesting rather than wrong. Cheap guard: make the first case of any
+  such study one whose answer is known in advance, or print the resolved material back into the
+  status file and read it before trusting the numbers.
+- **The outer boundary condition is part of the convergence study for a bound mode with a
+  small `Im(n_eff)`, not a cosmetic setting.** On the LR-DLSPPW baseline
+  (`Im n_eff = 3.9e-5`), swapping the electric wall for a scattering boundary changed
+  `Im(n_eff)` by 22.5% while `Re(n_eff)` moved by 0.002%. For a mode that decays exponentially
+  the correct treatment is a closed domain large enough to pass a domain-size check; a
+  first-order absorbing condition adds attenuation of its own on the evanescent tail. When the
+  mode is lossy (`Im/Re ~ 0.05`, the Ag-strip case) the same swap changed nothing, so the
+  sensitivity scales with how small the physical loss is.
+- **A planar structure computed as a 2D cross-section needs the lateral invariance imposed, not
+  assumed.** A laterally finite window with electric walls is itself a waveguide, and its
+  transverse modes land in the same range of effective index as the surface wave, which is what
+  made an earlier 2D `ewfd` attempt return window modes. Use a narrow strip - 200 nm was enough
+  at 1550 nm - with `PeriodicCondition` of type `Continuity` on the two side walls: only
+  harmonics with `k_x = 2 pi m / w` survive, and for a narrow strip every `m != 0` is far above
+  the modal range. After this the 2D result matched the analytic root to `2e-9`.
+- **`getData()` is not available on an `EvalGlobal` numerical feature.** The error reads
+  `Only supported by 'Eval', 'Interp' and 'Global'`. Use `getReal()` and `getImag()`, which
+  return `double[expr][solution]`, and set `data`, `innerinput = "manual"` and `solnum` when all
+  eigenmodes are wanted. `Interp` does support `getData()`.
+- **`setInterpolationCoordinates` takes coordinates in the geometry length unit, not in metres.**
+  A model built with `lengthUnit("um")` and fed metre-scale coordinates sampled a region a
+  million times too small; the exported "mode profile" came out constant because the whole cut
+  sat inside the metal film. Check the model's `lengthUnit` before building the coordinate grid.
+- **Pick the number of eigenmodes from where the branch sits relative to the shift, not from
+  habit.** With shift-and-invert around a good estimate the target branch is rank 1 by distance,
+  and the rest of a 20-mode request is spent on substrate light-line modes of the window. Ranking
+  the modes of one solved case by `|N - shift|` costs nothing and showed 10 modes were enough,
+  which more than halved the runtime of the whole convergence study.
+
+## Layered Cross-Sections - Recurrent Traps
+
+Lessons from the 2026-08-25 transition model (silicon feed coupled to a PCM plasmonic phase
+shifter, COMSOL 6.2).
+
+- **Overlapping rectangles silently thin the layer underneath.** A metal strip drawn as
+  `rect(x0, -t_au, w, t_au)` inside a buffer drawn as `rect(x0, -t_pcm, W, t_pcm)` does not sit
+  ON the buffer - it occupies its top `t_au`. Under Form Union the overlap becomes its own
+  domain and takes whichever material was assigned last, so the stack actually solved is
+  `buffer (t_pcm - t_au) | metal | ...`, not `buffer t_pcm | metal | ...`. Ten nanometres of
+  gold inset into a 120 nm buffer moved the planar branch from 2.113987 to 2.044375, a shift of
+  3 %, with nothing in the log to show for it. Draw each layer from the top of the previous one
+  and let the geometry sum the thicknesses.
+- **The only reliable check on a two-dimensional cross-section is the planar limit.** Widen
+  every lateral dimension of the guiding core together and the answer must walk onto the
+  transfer-matrix result for the same vertical stack. If it converges to something else, the
+  stack is wrong; if it does not converge at all, the branch is being lost. This caught the trap
+  above: the scan plateaued 0.07 away from the film value instead of approaching it.
+- **Scale the whole core, not part of it.** Widening a ridge while leaving the metal strip
+  narrow does not approach the film: the wide dielectric on either side of the metal carries its
+  own higher-index modes, the tracked branch stops being the top one, and the scan wanders
+  non-monotonically (2.07, 1.83, 2.09, 2.16 for successive widths). Metal and load have to be
+  widened together.
+- **Check that a feed can reach the branch at all before scanning its width.** A silicon strip
+  of thickness `t` cannot exceed the effective index of the infinite slab of the same thickness:
+  1.892394 at 220 nm, 2.085528 at 240 nm, 2.266728 at 260 nm at 1.55 um. If the branch to be
+  matched sits above that ceiling, no width will ever be synchronous, and a width scan will
+  quietly return the closest quasi-TE mode instead.
+- **A butt joint has to be evaluated with both waveguides on the same axis.** Exporting the
+  feed mode at its coupler offset and overlapping it with the phase-shifter mode gives the
+  overlap of two spatially separated fields - 1.3 % where the real answer was 85 %. Recompute
+  the feed mode centred before overlapping.
+- **Mode Analysis forgives the sign of the loss; Frequency Domain does not.** A permittivity with
+  a POSITIVE imaginary part is a gain medium under the frequency-domain convention, but a mode
+  analysis on the same material still returns the right magnitude of `Im(n_eff)` - it just hands
+  back the conjugate branch, and against an analytic solver written with the opposite convention
+  the magnitudes agree to nine digits, so nothing looks wrong. Carry that permittivity into a
+  propagating solve and the power grows along the guide: a straight lossy waveguide went from
+  1.23 to 1.37 of the launched power between two planes. Use `Im(eps) < 0` for anything that
+  propagates, and check it on a straight section before trusting a junction.
+- **A three-dimensional junction is affordable if the metal is a boundary condition.** A 10 nm
+  film meshed as a volume over micrometres of propagation is what makes such models impossible;
+  `TransitionBoundaryCondition` replaces it with a sheet impedance at no mesh cost, and the whole
+  model came to 32 thousand elements and under a minute. Calibrate first: the sheet has no
+  thickness, so the stack is short by exactly the film, and the neighbouring layer has to be
+  thickened until the sheet model reproduces the meshed cross-section. Here 180 nm of silicon
+  load became 184.356 nm and the two agreed to `2.7e-4` in index. The film's properties go on a
+  material assigned to the same boundary - the feature's own `userdef` switches are not named
+  consistently (`epsilonr_mat` exists, `mur_mat` does not).
+- **Two limiting cases pay for themselves before any junction number is believed.** Run the
+  structure with each waveguide going straight through: the lossless one must transmit exactly
+  one (measured 0.9967), and the lossy one must decay at exactly the rate its own cross-section
+  gives (measured ratio 0.9025 against 0.9051). Both were cheap, and the second is what exposed
+  the sign error above.
+- **`Image` export: `size` takes `manualweb`, not `manual`.** The allowed presets are
+  `current`, `manualweb`, `manualprint`, `presentation`; anything else throws "Invalid property
+  value - Property: size (Preset)" and, if the call is inside a try block, silently produces no
+  picture. Surface plots do export headlessly; Geometry and Mesh plot features still do not.
 
 ## Data-Hygiene For Material Tables
 
