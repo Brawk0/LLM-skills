@@ -323,6 +323,38 @@ sees only cut planes will say - correctly, on the evidence - that no 3D result h
 - When a model is 3D, say so in the note next to the numbers - elements, ports, what the ports
   solve - and label the slices as slices. The pictures and the sentence do different jobs.
 
+## Periodic Unit Cells And Sheet Materials - Recurrent Traps
+
+A periodic cell with a conductive sheet took eight solves to build from the API, and not one of
+the failures was about physics (2026-08-26). The pattern is worth keeping because every message
+the solver produced pointed away from the actual cause.
+
+- **A property the feature rejects is a cheap error; a property it silently lacks is expensive.**
+  The transition boundary condition refused `mur_mat` as unknown, then demanded `murbnd`, then
+  asked for a refractive index because its displacement-field model defaulted to `RefractiveIndex`.
+  Stop enumerating property names: assign a real MATERIAL to the boundary instead, with
+  `relpermittivity`, `relpermeability` and `electricconductivity` in one `def` group. One node,
+  no guessing, and it works for sheets exactly as it works for domains.
+- **`ScatteringBoundaryCondition` does not exist under that name in this build.** Probe before
+  planning a fallback around it.
+- **A periodic port needs its diffraction-order subnode, and the API may or may not create it.**
+  Without it the port's S-parameter degree of freedom couples to nothing and the solve dies with
+  `Singular matrix` - a message that names neither the port nor the missing node. Query
+  `feature(tag).feature().tags()` first and create the subnode only when the list is empty;
+  creating a second one produces `Duplicate parameter/variable name: ewfd.S2x`.
+- **`Singular matrix` is not a mesh diagnosis.** It was produced in turn by a missing diffraction
+  order, and it survived removing the sheet, splitting the periodic conditions one pair per layer,
+  and passing selections explicitly. Read the solver log ABOVE the error: the list of degrees of
+  freedom shows whether the ports were even recognised, and that is the fastest discriminator.
+- **Frequency-dependent expressions must be component VARIABLES, not global parameters.** A
+  parameter is evaluated once as a constant, so `freq` inside one leaves the material undefined.
+  The failure surfaces as a singular matrix, never as an undefined symbol.
+- **Bisect before hypothesising.** Removing the graphene sheet entirely, by an env switch, cleared
+  half the model of suspicion in one run. Three subsequent hypotheses - empty union selection,
+  ambiguous face pairing, parameter scope - were each plausible, each cost a solve, and each was
+  wrong. The probe that enumerates accepted feature IDs and property names costs seconds and
+  should be written after the second failure, not the fifth.
+
 ## Units In Expressions Are Not The Model's Length Unit
 
 A bare number in a COMSOL expression is in SI base units, whatever the geometry's length unit is
