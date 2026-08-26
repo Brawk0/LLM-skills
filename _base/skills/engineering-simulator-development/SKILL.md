@@ -14,6 +14,7 @@ Build a simulator that reproduces the observable behavior of the selected real s
 - Read `references/source-fidelity-checklist.md` whenever the simulator must match real hardware, firmware, FPGA, a protocol, or production software.
 - Also read `references/scanning-lidar-lessons.md` for scanning, ranging, mirror, ray-grid, angular-resolution, sector, or LiDAR work.
 - Also read `references/windows-exe-release.md` when building or replacing a Windows executable.
+- Also read `references/host-software-bench-lessons.md` when the emulator is used to reproduce a defect in the production client software without hardware: memory growth, freezes, throughput cliffs, reconnect storms.
 
 ## Repository And Workspace Boundaries
 
