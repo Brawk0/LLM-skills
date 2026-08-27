@@ -300,6 +300,27 @@ Practical rules:
   empty cell is right for trivial reasons.
 - When a sweep looks jagged, test the mesh before inventing physics for it.
 
+## Look Before You Create A Child Node
+
+COMSOL creates default children for you, and several features expose a COMMAND instead of a
+constructor. Creating one yourself then fails - sometimes loudly, sometimes as a name clash
+far from the cause. This cost three separate debugging sessions in one day (2026-08-26/27):
+
+- `ewfd` already owns a node tagged `pec1`. Adding a perfect electric conductor under that
+  tag fails with "An object with the given name already exists". Use another tag.
+- `FarFieldDomain` creates its own `FarFieldCalculation` child on construction. Creating
+  `ffc1` yourself fails the same way; set the selection on the existing child instead.
+- A periodic port's diffraction orders come from
+  `feature(port).runCommand("addDiffractionOrders")`, called ONCE after every periodic port
+  exists. Creating a `DiffractionOrder` subnode per port instead makes their S-parameters
+  collide: "Duplicate parameter/variable name - Variable: comp1.ewfd.S2x". That message names
+  a variable, not a node, so it does not point at the mistake.
+
+The habit that avoids all three: before `create(...)` on a physics feature, print
+`feature(tag).feature().tags()` and look at what is already there. If the desktop does
+something "automatically", the API almost always exposes it as a command rather than
+leaving it to you.
+
 ## Run One Batch At A Time
 
 Two `comsolbatch` processes on one machine do not merely share the CPU - they corrupt the run.
@@ -315,6 +336,15 @@ outright (2026-08-26).
   four-line guard is cheaper than discovering the duplication in the numbers afterwards.
 - After killing a runaway sweep, confirm the process is actually gone before restarting. A stopped
   shell does not always take its child batch with it.
+- **Stopping a background task does not reliably stop the shell loop it started.** Twice in one
+  session a queue that had been stopped kept launching solves: once for over an hour, on code
+  whose export was already known to be broken, while blocking the queue that mattered. The
+  task shows as stopped; the loop is still there. Verify by PROCESS LIST, then kill the loop
+  and its child by PID.
+- **Never kill by image name on a shared machine.** `taskkill /IM comsolbatch.exe` also kills
+  whatever a parallel session is solving. Trace the parent chain of the process you mean to
+  stop and kill those PIDs only.
+
 - Symptoms in the data, in order of how early they show: duplicated scheme rows in the result CSV,
   interleaved half-lines in the batch log, per-case times several times the expected one.
 

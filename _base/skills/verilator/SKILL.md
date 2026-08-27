@@ -50,6 +50,7 @@ Verilator refuses several constructs this project uses. Each refusal below was r
 - Includes are resolved only through `+incdir+`, never relative to the including file. This RTL includes relatively, so pass an `+incdir+` for every source directory.
 - **Nested interface members are not reachable.** Reading `if_outer.if_inner.field` — an interface instance passed into another interface — fails with `Can't find varpin scope of '<field>' in dotted signal`, followed by `Internal Error: ../V3Const.cpp: Not linked`. ModelSim and GowinSynthesis both accept it. The lidar encoder path does exactly this (`if_enc_v4.if_ref_enc.ch_A` in `ref_encoder_v4.sv`), and the only way through is to carry the signal as an ordinary port instead of through the nested interface. That is also where this project was already heading: the same file on `research/verilator-encoder-bench` takes `in_raw_encoder` as a plain port.
 - **Every source directory has to be an `+incdir+`.** The repository convention is to include from the `src` root, but legacy files still include relative to themselves, and Verilator resolves neither relative to the including file. Generating one `-f` file with every directory that holds sources is the only thing that works; a missing one shows up as `Cannot find include file`.
+- **A comment whose first word is `Verilator` is read as a directive.** Verilator scans comments for its own metacommands, so `// Verilator не принимает эту конструкцию` becomes `Unknown verilator comment` and stops translation. It does not matter that the rest is prose, or that the language is not English — only the first word after the slashes. Write the tool's name anywhere but first.
 - **Cyrillic in `$display` reaches the generated C++ raw** and GCC warns `unknown escape sequence: '\c'` for byte sequences that happen to look like escapes. Output is still correct; the warnings are noise.
 - Sources here include `"../rtl/config.vh"` — a path relative to the **current directory**. Run both the translation and the built binary from the directory that makes such paths resolve.
 - **`UNOPTFLAT` on an unpacked array is usually a false alarm.** A chain `assign sum[i] = sum[i-1] + in_arr[i]` is a ladder, not a loop, but Verilator tracks the array as one signal and reports circular combinational logic. Unlike `BLKANDNBLK`, suppressing this one costs nothing but scheduling: `-Wno-UNOPTFLAT`.
@@ -76,6 +77,14 @@ of ours; none was a limitation of Verilator.
 - **The stimulus counted an edge that only existed at time zero.** With the ticks moved to `@(negedge clk)`, the offset flipped sign instead of disappearing: `reg clk = 0` is an assignment *at* time 0, so the transition x → 0 is a negedge, and whether the stimulus process reached its first `@(negedge clk)` before or after the clock got its initial value is not defined. ModelSim counted that pseudo-edge, Verilator did not. Synchronise to a real edge first — `@(posedge clk); @(negedge clk);` — and never count edges straight from time zero.
 - **A `generate` branch selected by a string parameter, silently taken by neither.** `multiplier` declared `parameter MODE = "SERIAL"` — untyped, so its type is the packed vector of its default — while `linear_interpolation` passed the mode down through `string MULT_MODE`. Comparing the two types, ModelSim picked the right branch and Verilator picked **none**: the module was generated empty, `done_stb` was never driven, and the interpolator FSM waited forever. Sixteen thousand missing shots, no warning, clean build. Declare such a parameter `parameter string MODE`, and always give the `generate` an `else` that fails loudly. Details: vault note «Строковый параметр в условии generate».
 
+- **ModelSim loses `signed` on a net declared through a type parameter — Verilator keeps it.** `wire local_t_signed x = y >>> N;` where `local_t_signed` is `logic signed [W-1:0]` looks signed and is signed in Verilator, but ModelSim treats the net as unsigned and turns `>>>` into a logical shift. Measured 27.08.2026 in `dpll_nco`: with `lcl_err = -1`, `lcl_err >>> 3` gave **2 097 151** in ModelSim (that is `0xFFFFFF` shifted in zeros) against `-1` in Verilator. The period correction came out at two million, the PLL never locked, and the two simulators reported 3 shots versus 22 on identical RTL. Declare the net `wire signed [W-1:0]` and wrap the operand in `$signed()`; then both read it the same way. **This is the one divergence so far where ModelSim, not Verilator, is the odd one out** — worth remembering while the project still treats ModelSim as the reference.
+- **`repeat` inside `fork ... join_none` is refused.** `%Error-LIFETIME: Process might outlive variable '__Vrepeat…'`. ModelSim accepts it. Restructure the spawned process without a `repeat`, or keep the loop in the main thread.
+- **A variable driven from both an `initial` block and an `always_ff` behaves differently.** Verilator runs it as written; ModelSim produced a constant zero for the whole test. Found in a testbench of mine, not in the RTL, and it cost a wrong diagnosis: the arithmetic under test was fine, the harness was not. Same family as `BLKANDNBLK` — one variable, one driver.
+
+- **`<=` inside an `initial` block is executed as `=`.** Verilator says so plainly — `%Warning-INITIALDLY ... This will be executed as a blocking assignment '='!` — and then does it. ModelSim schedules it in the NBA region as written. So a stimulus generator "made race-free" by switching to non-blocking is race-free in one simulator and unchanged in the other. Found 27.08.2026 in `raw_encoder_from_file`, where exactly that fix had been applied the day before. What actually saved it was the other half of the same fix: counting the ticks on `@(negedge clk)`, which puts the assignment half a cycle away from the sampling edge and makes the blocking/non-blocking question irrelevant. **Do not rely on `<=` in an `initial` block for ordering — put the assignment in the opposite clock phase instead.**
+
+- **A rewrite that LATCHES an undefined value diverges where the original did not.** The old NCO read `ref_period` only through wires: while it was undefined the comparison produced `x`, the branch was not taken, and everything recovered by itself once the period appeared. The rewritten one *loads* the period into a down-counter, and an `x` that lands there stays forever — the sign bit is `x`, the edge never comes, the module is dead. Measured 27.08.2026 on the same RTL and the same testbench: ModelSim gave 9 shots and `FAILED`, Verilator gave 1513 and `ALL PASS`, because two-state simulation has no `x` to latch. The lesson is not about the tools: **when you replace combinational reads with registered state, you also remove the design's ability to recover from an undefined input**, and the four-state simulator is the only one that will tell you.
+
 ### The rule that follows from them
 
 **The trust was earned, not assumed.** After the six fixes above, the same testbench over 80 ms of model time gives `full_view_fires=11357 sector_fires=7326 total=18683 errors=0 ALL PASS` in **both** simulators, down to the nanosecond timestamps of the angle-step warnings, and a 1.2 ms differential trace matches on all 506 375 recorded rows. Verilator took 21.9 s where ModelSim took 43 min 48 s — but the number only became worth having once it was the same number.
@@ -84,6 +93,27 @@ of ours; none was a limitation of Verilator.
 
 
 **A four-state simulator cannot be matched by adding X to Verilator — Verilator has no X.** The only convergence is to remove the undefined value, and in a design without a reset that means every register carries an initial value. That is not a concession to the tool: on Gowin the flip-flops load their initial values from the bitstream, so the X-propagating run is the one that does *not* describe the hardware. Where the two simulators disagree at time zero, the design is relying on something the silicon does not provide.
+
+## Run Both Simulators On Every Testbench
+
+Project decision, 27.08.2026: every simulation is run in **both** ModelSim and
+Verilator, and the two verdicts are compared. The runner is `run_both.sh` on the
+`feat/clk-300mhz` branch; it takes one testbench, runs it through both, and
+prints whether the verdicts agree.
+
+The reason is that each simulator is blind in a different way. ModelSim carries
+four states and accepts constructs Verilator refuses outright; Verilator is two
+orders of magnitude faster and catches what ModelSim passes over in silence. A
+verdict from one of them is a claim; a matching verdict from both is a check.
+
+**The direction of travel is away from ModelSim.** It is the reference today
+only because the design was written against it. Every divergence found is
+recorded here with the measurement that settled it, and when the list stops
+growing, Verilator becomes the reference and ModelSim the second opinion. Do not
+treat "ModelSim says so" as authority — treat it as one of two readings.
+
+Write down every divergence, including the ones that turn out to be our defect.
+Those are the majority, and they are what makes the list finite.
 
 ## Verification Rule
 

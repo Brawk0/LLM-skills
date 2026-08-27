@@ -284,6 +284,56 @@ pre-applied: if a specialist opens a shared calendar to see their own schedule,
 default the filter to them (via the `staff.user_id → users.id` link) and leave
 an explicit way to clear it.
 
+## Duplicate submissions and the way back
+
+### Read the timestamps before reading the code
+
+When a record appears twice, the server access log settles the cause faster
+than any reasoning about the code. The gap between the two POSTs names it:
+
+| Gap | Cause |
+| --- | --- |
+| sub-second | double click, or a client retry |
+| a few seconds | the button was pressed again |
+| tens of seconds | the form was filled in and submitted again |
+
+Two separate POSTs each followed by its own GET is a human repeating the
+action — not a framework bug, and not something a second timer or a
+transaction will fix.
+
+### An action whose result is not visible will be repeated
+
+The usual root cause: after `POST → 303 → GET`, the page reloads **at the top**
+while the new row lands in a table further down, unhighlighted. Nothing says
+"it worked", so the operator does it again. Either show the result (scroll
+anchor, highlighted new row, flash message) or defend against the repeat.
+
+### Three layers, one per case
+
+- **Client, fast repeat.** Block the second submit and disable the button.
+  Two traps: disable **after** a tick (`setTimeout(..., 0)`) or the button's
+  name/value never reaches the server; and skip forms whose inline
+  `onsubmit="return confirm(...)"` was answered "no" — check
+  `e.defaultPrevented` first.
+- **Server, deliberate repeat.** Look for an existing record in the same slot
+  and return a confirmation page listing what is already there. Prefer
+  confirmation over a hard block when the "slot" is approximate — e.g. a
+  back-dated form that does not ask for a time and defaults every record to
+  the same hour will collide legitimately.
+- **Server, already written.** See below.
+
+### Every money-changing action needs an inverse in the UI
+
+A guard like "a completed lesson may not be deleted, it has already affected
+balances and payroll" is right, but "cannot be deleted" must not become
+"cannot be corrected". If the only fix for an operator error is editing the
+database by hand, the first mistake becomes a developer task.
+
+Give the completed record an explicit reversal with a mandatory reason:
+status goes to cancelled, the charges are zeroed, the reason and author are
+stored and displayed. The row stays in the journal — the same append-only
+discipline as corrections.
+
 ## Deployment
 
 ### One-command deploy script that reads env
