@@ -126,6 +126,15 @@ now resolves the name under `src/` and `probe/`. Before that, a bare name became
 a path that did not exist, and the runner reported «нет .do / сборка не прошла» —
 a fabricated divergence caused by the call, not the design.
 
+**At 300 MHz ModelSim stopped being practical for the full-path testbench.**
+`encoder_processing_tb` plays a real encoder recording, so raising the system
+clock from 50 to 300 MHz multiplies the simulated cycles by six. ModelSim took
+43 minutes at 50 MHz; at 300 it was still running after two hours of CPU and had
+to be killed, while Verilator finished the same run in minutes. From this point
+the full-path test is a Verilator test, and ModelSim keeps the module-level ones
+where its four states still earn their keep. That is not a preference — it is the
+first place where the two-simulator rule costs more than it returns.
+
 **The direction of travel is away from ModelSim.** It is the reference today
 only because the design was written against it. Every divergence found is
 recorded here with the measurement that settled it, and when the list stops
