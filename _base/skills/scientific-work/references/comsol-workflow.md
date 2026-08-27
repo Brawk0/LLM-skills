@@ -42,6 +42,27 @@ actually built, and a reader cannot tell a correct model from a wrong one withou
   it still looks like evidence. When the feature is three-dimensional, show two planes.
 - When variants are compared, export at least the baseline and the winner. A bar chart of the
   comparison is not a picture of the models.
+- **If you built a model, the note shows that model.** A note whose only figures are graphs, or
+  figures taken from the source the work reproduces, has not shown the model at all - and the
+  reader cannot tell whether what was solved is what was described. This rule was already written
+  here and still got missed on the pillar-absorber note (user, 2026-08-27): the export switch was
+  in the program, unused, and the note shipped with one plot and the author's own drawing. Having
+  the rule is not enough; check it.
+
+**Before calling a modelling note finished, verify by counting.** Not "did I mean to" but "is it
+there":
+
+1. Count the figures in the note that came out of the solver. Fewer than two - the note is not
+   finished.
+2. At least one must show the STRUCTURE as solved: the volume, the material map, or the geometry
+   with the field on it. A curve of a derived quantity is not that.
+3. At least one must show the FIELD of the working solution, in a view that contains the feature
+   under discussion.
+4. Figures taken from the source being reproduced do not count toward either. They are what is
+   being checked, not the check.
+5. If the run that produced the numbers had no image export, RE-RUN IT with the export on. One
+   extra solve is cheaper than a note nobody can audit.
+
 - Frame and brighten afterwards when the exporter cannot - mechanics are in the traps section
   and in `scripts/` - but never crop away a field picture's title strip, which is its
   provenance.
