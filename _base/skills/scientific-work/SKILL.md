@@ -99,6 +99,33 @@ Do not store secrets, credentials, private raw datasets, unpublished full measur
 - Icarus Verilog, Verilator, GHDL, vendor lint, or another simulator may be used for fast preliminary triage when useful, but never report their result as the final verification of the user's HDL. Label it preliminary until ModelSim 10.5b passes.
 - Prefer deterministic batch checks: create/map a clean work library with `vlib`/`vmap`, compile SystemVerilog with `vlog -sv`, compile VHDL with the appropriate `vcom` standard flag, and run `vsim -c` with a finite `run` command or `run -all` followed by an explicit quit. Preserve the first ModelSim error and the exact source/tool version in the project checkpoint or verification note.
 
+## Computational Artifacts Leave The Local Disk
+
+Work that lives only in a local scratch folder such as `C:\workspace\...` is work that will be
+lost - to the next PC, the next reinstall, or simply to forgetting it exists. Anything a note's
+numbers depend on belongs in the synced vault, next to the note that cites it (explicit user
+requirement, 2026-08-26).
+
+- Sync, in this order of priority: the model-building script (`.java`, `.py`, `.m`) - it IS the
+  model and reproduces everything else; the exported result tables (`.csv`); the figures and the
+  script that draws them; and the model file itself, stripped.
+- **Model files are stripped, not skipped.** `scripts/Compress-MphModel.ps1` clears solution data,
+  mesh data, derived tables and the edit history. Measured on this vault's own models the result
+  is 2-5 % of the original: a 181 MB solved model becomes a few megabytes and syncs without a
+  second thought. Geometry, materials, physics, mesh settings, study and solver settings all
+  survive, so the stripped file opens and re-solves on another PC.
+- Do not use "the script rebuilds it" as a reason to keep no model at all. The script needs the
+  same solver version and a working toolchain; the stripped `.mph` opens in the GUI and is the
+  fastest way for a person to see what was actually solved.
+- **Never strip the only copy of a model that a script did not generate** - one received from
+  someone else, or built interactively. Keep the original too, and put both in the vault.
+- Debris is not an artifact: `.class`, `.status`, `.recovery`, `*_Model.mph` duplicates, and
+  batch logs of successful runs. Delete them instead of syncing them. Large raw field exports
+  (dense `.csv` grids of E and H) are reproducible from the model in minutes - keep the analysis
+  tables, not the grids.
+- Say in the note where the model lives and how to re-run it, so the artifact and the text that
+  depends on it cannot drift apart.
+
 ## Local Utility Scripts
 
 - Prefer the reusable scripts in `scripts/` over ad hoc PowerShell one-liners for routine vault work:
@@ -116,6 +143,22 @@ Do not store secrets, credentials, private raw datasets, unpublished full measur
   - `scripts/Get-ImageCrop.ps1` crops an arbitrary rectangle and upscales it, with an optional `-Sharpen` contrast boost for faded or yellowed print; use it after the tile pass to re-read one specific caption, parameter box, axis label, or imprint line. Keep crops narrow: a very wide crop gets downsampled again on display and reads worse than a tight one at higher `-Zoom`.
   - `scripts/Convert-SvgToPng.ps1` renders an SVG to PNG with headless Chrome for visual QA of generated figures and reconstructed posters. Gotcha: when the SVG root uses physical units (`width="841mm"`), Chrome expands them at 96 dpi, so 841 mm becomes 3177 px; passing a smaller `-Width`/`-Height` silently screenshots only the top-left corner instead of scaling the page. Compute the window size as millimetres times 3.7795 (learned 2026-08-12 while reconstructing the 1966 «Электровакуумные и полупроводниковые приборы» poster series).
   - When reconstructing a damaged or low-resolution source into a printable replacement, keep one rule visible in both the artefact and the note: print what was read, mark what was reconstructed by inference, and replace what is unrecoverable with an ellipsis or omission. Never fill an unreadable field by analogy with a sibling document — a plausible invented archival code is worse than a visible gap, because it cannot later be distinguished from a genuine reading.
+  - `scripts/Compress-MphModel.ps1` strips COMSOL `.mph` models so they can be synced instead of
+    left on one PC: it clears solution data, mesh data, derived tables and edit history, keeping
+    geometry, materials, physics and all settings. Dry run by default, `-Apply` to write,
+    `-Recurse` over a directory, `-MinMB` to skip already-small files, `-KeepMesh` when the mesh
+    is expensive and irreproducible. Companion `scripts/StripMph.java` is compiled on demand.
+    Two traps it exists to remember: `comsolcompile` emits only the top-level class, so a model
+    script must contain **no anonymous inner classes** (otherwise the run dies with "Error
+    running java class - Detail: Foo$1"), and the bundled compiler predates effectively-final
+    capture, so anything a nested construct touches has to be declared `final` explicitly.
+  - `scripts/Publish-ComputeFolder.ps1` moves a whole local computation folder into the vault:
+    it copies the sources, result tables and figures, runs the models through the stripper, and
+    writes a `MANIFEST.md` saying where the copy came from. It leaves behind batch debris
+    (`.class`, `.status`, `.recovery`, `*_Model.mph`) and dense field exports. The bulk filter is
+    by SIZE, not by name - `-MaxCsvMB` defaults to 1 MB - because these dumps arrive under a new
+    name from every script, while a table a person reads is kilobytes and a sampled field is
+    megabytes. On the 2026-08 queue that separated 21 MB worth keeping from 100 MB regenerable.
   - `scripts/Find-ExistingPaperPdf.ps1` checks whether a paper PDF already exists in the vault before downloading, using DOI, DOI-safe fragments, DOI suffixes, year, and stable title words; use it before browser or publisher downloads to avoid duplicates.
   - `scripts/Download-OpenAccessPapers.ps1` downloads legitimately available open-access PDFs from DOI lists by querying OpenAlex/Crossref, validating PDF signatures, and writing a JSON manifest. It does not bypass paywalls or use university credentials; use the browser workflow in `references/paper-analysis.md` when the user wants to authenticate through institutional access.
   - `scripts/Install-ObsidianLocalRestApi.ps1` installs or updates the Obsidian Local REST API plugin release files inside the synced vault.

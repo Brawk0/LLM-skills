@@ -200,6 +200,140 @@ Two clean fixes:
 
 Do NOT do the string-formatting workaround (`"IN (" + ",".join(...) + ")"` with values sql-quoted by hand) — you leak SQL-injection through the first field that comes from user input. Always parametrise.
 
+## Time: one timezone for the whole app
+
+### Naive local timestamps + UTC server = a silent offset
+
+Schedules are usually stored as **wall-clock** time split into `date` + `time`
+columns (a lesson at 18:00 stays at 18:00 after a DST change — that is the
+point). Those values carry no timezone. The server almost always runs UTC.
+Comparing the two silently shifts everything by the UTC offset.
+
+The trap is that PostgreSQL does not complain. `timestamp < timestamptz`
+implicitly casts the naive side **to the session timezone**:
+
+```sql
+-- both wrong on a UTC server when the times are local wall clock
+WHERE (lesson_date + start_time) < now()                       -- silent cast
+WHERE (lesson_date + start_time) < now() AT TIME ZONE 'UTC'    -- explicitly UTC
+```
+
+Symptoms are indirect and easy to misdiagnose: a "check every N minutes" poller
+looks like it only runs on page load, reminder pushes arrive hours late, a
+badge counter stays at zero. The user reports the *symptom* ("the dialog only
+appears when I log in"), and fixing the symptom adds a second timer that
+changes nothing.
+
+### Fix: compute "now" in the app, pass it as a parameter
+
+Do not put `now()` inside the query — it resolves in the database's timezone.
+One declared timezone, one helper, parameters everywhere:
+
+```python
+APP_TZ = ZoneInfo(os.environ.get("APP_TZ", "Europe/Moscow"))
+
+def local_now() -> datetime:      # naive, same shape as what is in the DB
+    return datetime.now(APP_TZ).replace(tzinfo=None)
+
+def local_today() -> date:
+    return local_now().date()
+```
+
+Then `... < %s` with `local_now()`. Behaviour no longer depends on the server's
+`timedatectl` or the database's `TimeZone`.
+
+Also replace `date.today()` with `local_today()`: on a UTC server, between
+midnight and the UTC offset, "today" is still yesterday for the user.
+
+Grep for all of these when auditing: `now()`, `AT TIME ZONE`, `utcnow()`,
+`date.today()`. One user-visible complaint usually means several silent ones.
+
+### Mobile polling: interval alone is not enough
+
+Two independent reasons a browser poll stops working on a phone:
+
+- **Suspended timers.** Mobile browsers throttle or freeze `setInterval` in a
+  backgrounded tab. Pair every poll with a `visibilitychange` listener that
+  re-checks when the tab becomes visible again.
+- **Cached responses.** A polled `GET` is cacheable; a cached empty list means
+  the dialog never appears. Set `Cache-Control: no-store` on the response *and*
+  `fetch(url, {cache: 'no-store'})` on the client — a tell-tale user report is
+  "it appeared after I cleared the cache".
+
+```javascript
+setInterval(check, 60000);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') check();
+});
+```
+
+## Tables that are read on a phone
+
+Grouping rows under a per-group heading (`<h2>date</h2>` + its own table)
+duplicates the header for every group and eats a phone screen. One table, one
+header row, and the grouping value as the **first column printed only on the
+first row of each group**, with a heavier border between groups. Reads better
+and scrolls less.
+
+When a filter pins a column to a single value (one teacher, one status), drop
+that column: it repeats what the filter already says, and horizontal space is
+the scarcest resource on a phone.
+
+A filter that answers "why did this user open the page" should come
+pre-applied: if a specialist opens a shared calendar to see their own schedule,
+default the filter to them (via the `staff.user_id → users.id` link) and leave
+an explicit way to clear it.
+
+## Duplicate submissions and the way back
+
+### Read the timestamps before reading the code
+
+When a record appears twice, the server access log settles the cause faster
+than any reasoning about the code. The gap between the two POSTs names it:
+
+| Gap | Cause |
+| --- | --- |
+| sub-second | double click, or a client retry |
+| a few seconds | the button was pressed again |
+| tens of seconds | the form was filled in and submitted again |
+
+Two separate POSTs each followed by its own GET is a human repeating the
+action — not a framework bug, and not something a second timer or a
+transaction will fix.
+
+### An action whose result is not visible will be repeated
+
+The usual root cause: after `POST → 303 → GET`, the page reloads **at the top**
+while the new row lands in a table further down, unhighlighted. Nothing says
+"it worked", so the operator does it again. Either show the result (scroll
+anchor, highlighted new row, flash message) or defend against the repeat.
+
+### Three layers, one per case
+
+- **Client, fast repeat.** Block the second submit and disable the button.
+  Two traps: disable **after** a tick (`setTimeout(..., 0)`) or the button's
+  name/value never reaches the server; and skip forms whose inline
+  `onsubmit="return confirm(...)"` was answered "no" — check
+  `e.defaultPrevented` first.
+- **Server, deliberate repeat.** Look for an existing record in the same slot
+  and return a confirmation page listing what is already there. Prefer
+  confirmation over a hard block when the "slot" is approximate — e.g. a
+  back-dated form that does not ask for a time and defaults every record to
+  the same hour will collide legitimately.
+- **Server, already written.** See below.
+
+### Every money-changing action needs an inverse in the UI
+
+A guard like "a completed lesson may not be deleted, it has already affected
+balances and payroll" is right, but "cannot be deleted" must not become
+"cannot be corrected". If the only fix for an operator error is editing the
+database by hand, the first mistake becomes a developer task.
+
+Give the completed record an explicit reversal with a mandatory reason:
+status goes to cancelled, the charges are zeroed, the reason and author are
+stored and displayed. The row stays in the journal — the same append-only
+discipline as corrections.
+
 ## Deployment
 
 ### One-command deploy script that reads env
