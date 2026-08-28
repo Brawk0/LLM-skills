@@ -117,6 +117,25 @@ each PNG and check, against the template's example:
 Note: a DOCX open in Word locks the file; close it (or render a `_v2`
 copy). Do this render every time layout code changes, not just once.
 
+**The Markdown source in the vault is a deliverable too, and it gets the same
+two layers.** Checking the built DOCX is not enough: the user reads the note.
+Open it after every change and confirm the figures are actually visible there.
+
+Never invent a build-time placeholder syntax for figures. A marker such as
+`**РИСУНОК 1: file.png**`, expanded to a real image only by the conversion
+script, produces a correct DOCX and a broken note: the prose says «показана на
+рис. 1» over an empty line, which is exactly the defect
+`scientific-work/references/obsidian-style.md` forbids — a textual reference to
+a visual that is not present. Write figures as the vault's own embeds
+`![[file.png|width]]` and teach the converter to read that syntax, so the
+readable note and the build input are the same string (user correction,
+28.08.2026).
+
+Before embedding by short name, confirm the image filename is unique in the
+vault; generated figures are routinely copied into both a computation folder
+and a paper's `_media` folder, and a bare `![[junction_profile.png]]` then
+resolves ambiguously. Add the minimal folder path for those.
+
 ## Standard Workflow
 
 1. Identify the venue and read its dedicated skill (if any) fully.

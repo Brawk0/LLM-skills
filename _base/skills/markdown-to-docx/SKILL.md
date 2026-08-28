@@ -20,6 +20,7 @@ python ".\scripts\convert_md_to_docx.py" "input.md" --output "output.docx" --ref
 
 ## Artifact Rules
 
+- Read figures from the source's own embed syntax; do not require a custom marker. When the source is an Obsidian note, `![[file.png|width]]` is the input the converter must accept, expanding it to a real path and a page-appropriate width. Introducing a build-only placeholder (`**РИСУНОК 1: file.png**`) splits the artifact from its source: the DOCX comes out correct while the note the user actually reads shows a caption over an empty line. Keep one string that both a human and the script understand (lesson 28.08.2026).
 - Never let Markdown escape syntax become visible Word text. Convert `air\ |\ PCM\ |\ SiO_2` into readable text such as `air | PCM | SiO_2` with the `2` rendered as a subscript or Word equation text.
 - Do not place layer-stack, equation, or list lines immediately after a figure caption unless they are part of the caption. If Markdown conversion causes them to appear under the caption, move them back into the body text before or after the figure.
 - Render scientific tokens such as `SiO_2`, `lambda_0`, `k_0`, `n_eff`, `L_pi`, and `L_power` as Word subscripts, Unicode-safe text, or equation objects. Plain underscores are acceptable only in file names, code, identifiers, or explicit user-requested literal text.
