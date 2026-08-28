@@ -14,11 +14,22 @@ Treat a DipTrace ASCII schematic as both a structured netlist and an electrical 
 1. **Establish scope.** Determine whether the user asked for review, diagnosis, editing, or all three. A review request authorizes read-only inspection, not electrical redesign. A requested textual normalization authorizes only those exact string edits unless the user also asks to fix the circuit.
 2. **Fingerprint the source.** Record absolute path, byte length, SHA-256, encoding, BOM state, and newline style before editing. If the file changes before the write, stop rather than overwriting concurrent work.
 3. **Inspect structurally.** Run `scripts/inspect_diptrace_ascii.py` before relying on screenshots or manual search. Inspect requested references and nets explicitly. For format semantics, read [references/format-map.md](references/format-map.md).
-4. **Reconstruct intent.** Map every relevant net endpoint through the top-level part index and pin ordinal to the component reference, `StringNumber`, and pin name. Check the footprint pad numbers separately; symbol pins do not prove that a package pad exists.
+4. **Reconstruct intent.** Map every relevant net endpoint through the placed part's explicit `Number` and pin ordinal to the component reference, `StringNumber`, and pin name. Check the footprint pad numbers separately; symbol pins do not prove that a package pad exists.
 5. **Audit electrically.** Read [references/electrical-audit-checklist.md](references/electrical-audit-checklist.md) and use primary manufacturer datasheets for every material conclusion. Check the exact orderable suffix, not merely the family name.
 6. **Edit minimally.** Make only deterministic, counted replacements. Preserve encoding and newline style. Do not globally transliterate project paths, sheet titles, library paths, manufacturer part numbers, or net names unless the user explicitly requests those exact fields.
 7. **Validate after editing.** Re-run the inspector, compare structural counts and connectivity against a pre-edit copy when available, rescan old/new strings, and recompute SHA-256. Open/import the result in DipTrace and run ERC when the application is available.
-8. **Report by severity.** Lead with production blockers, then significant risks, lower-priority deviations, confirmed-good sections, exact edits, validation evidence, and limits of the review. Distinguish proven faults from items that require layout inspection or bench measurement.
+8. **Report as a concise engineering checklist.** Follow the format below, ordered by severity. Distinguish verified faults, unverified conditions, confirmed fixes, and decisions accepted by the developer.
+
+## Report Format
+
+The default report is a very short engineering checklist in the user's language, ideally one screen. Use technical wording and retain only what determines the next engineering action; a full audit does not require a long report. Expand only when the user asks for an explanation or calculation.
+
+- Open item: `- [ ] **Fxx · Pn — references**: verified condition / decisive limit → required change or measurement.` Keep one compact item per finding, with numbers and a source link only where needed to justify the action.
+- Confirmed fix: `- [x] **Fxx — references**: change verified in the current source.` A claimed fix is not a verified fix; recheck the latest export and retain any remaining part of the finding.
+- Keep accepted or withdrawn findings out of the open checklist. Record them in one short line, explicitly distinguishing developer acceptance from an electrically verified fix. Do not reopen an accepted item without new evidence or a request to reassess it.
+- Add one short source/version line and one line for unverified scope, such as PCB layout or bench tests. Do not append an exhaustive passed-check list, repeated summary, or chronological discussion.
+- Store detailed calculations, net/pin traces, hashes, logs, and previous report versions in linked supporting artifacts. Do not reproduce those materials in the main checklist or final chat answer.
+- Treat a user-confirmed assembly override, such as DNP, as an explicit assumption for the actual assembly; distinguish it from what the exported BOM says.
 
 ## Inspection Commands
 
@@ -29,6 +40,7 @@ python scripts/inspect_diptrace_ascii.py "D:\path\design.asc" --strict
 python scripts/inspect_diptrace_ascii.py "D:\path\design.asc" --ref D2 --net GND --net "{VIN}"
 python scripts/inspect_diptrace_ascii.py "D:\path\edited.asc" --compare "D:\path\before.asc" --strict
 python scripts/inspect_diptrace_ascii.py "D:\path\design.asc" --json
+python -B -m unittest discover -s scripts -p "test_*.py"
 ```
 
 The script is intentionally read-only. It reports encoding, line endings, balanced structure, top-level parts, nets, resolved endpoints, symbol pins, footprint pads, Cyrillic lines, and connectivity changes.
