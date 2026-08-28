@@ -136,6 +136,12 @@ vault; generated figures are routinely copied into both a computation folder
 and a paper's `_media` folder, and a bare `![[junction_profile.png]]` then
 resolves ambiguously. Add the minimal folder path for those.
 
+A figure you generated yourself is checked against the itemised list in
+`scientific-work/references/obsidian-style.md` (Visuals) — coincident series
+hiding one another, a zero result drawn on the axis line, legend entries that
+cannot be found in the plot, text collisions, and the caption's claim being
+visually verifiable. Opening the PNG and glancing at it is not that check.
+
 ## Standard Workflow
 
 1. Identify the venue and read its dedicated skill (if any) fully.
