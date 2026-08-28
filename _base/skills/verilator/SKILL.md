@@ -136,6 +136,14 @@ the full-path test is a Verilator test, and ModelSim keeps the module-level ones
 where its four states still earn their keep. That is not a preference — it is the
 first place where the two-simulator rule costs more than it returns.
 
+**Making a testbench self-checking is a PAIR of changes, not one.** The `$finish`
+goes in the testbench; the `.do` must switch from a fixed `run 2400` to `run -all`
+at the same time. Otherwise ModelSim stops mid-run and prints no verdict while
+Verilator prints one — a divergence manufactured by the harness, not the design.
+155 of the 204 `.do` files in this repository still carry a fixed `run N`, so
+expect to hit this on nearly every testbench you rewrite. The reverse order is
+also wrong: `run -all` on a testbench with no `$finish` hangs ModelSim forever.
+
 **Measure the distance, do not estimate it.** `sweep_verilator.sh` on the
 `feat/clk-300mhz` branch runs every `*_tb.sv` through Verilator and sorts the
 outcome into five buckets — builds and passes, builds and fails, builds without a
