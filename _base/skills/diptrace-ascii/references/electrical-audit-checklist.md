@@ -73,6 +73,21 @@ Cross-check these fields as one identity:
 
 A correct symbol with another device's supplier fields is a production defect even when ERC passes.
 
+Weight the fields by whether they actually reach a purchaser:
+
+- **`Name` and `Value` are the BOM.** DipTrace's export is `RefDes;Name;Value;Quantity`, so these two carry the ordering identity and must be right.
+- **`MP`, `Manufacturer` and the distributor part numbers** are what someone orders from inside the editor. Treat a mismatch here as a real defect.
+- **`Description` is out of scope — do not report it.** It is SnapEDA import text, it does not reach the BOM, and it routinely keeps describing the original donor part after a deliberate substitution.
+- **`BaseName` is historical** in long-lived projects (`Cap 0603` under a `CAP_0603` name) and is not exported. Note it only when it contradicts the device's *function*, and say plainly that it does not reach the BOM.
+
+Read the ordering code itself rather than trusting the human-readable half beside it. In the IEC 60062 R-notation used by Yageo and others the letter is the decimal point: `RC0603FR-074K7L` is 4,7 kΩ while `RC0603FR-0747KL` is 47 kΩ. A one-character slip silently ships the wrong decade — check the code against the stated value on every edited resistor.
+
+An orderable code needs its package and packaging suffix. A bare family name such as `UC2845B` is not orderable; `UC2845BD8G` is.
+
+### Proving a ground-domain split
+
+To show that two ground domains are actually separate, do not read the net member lists. Build a graph over nets joined only by components that conduct DC between their own pins — resistors, inductors, jumpers, ferrites — excluding capacitors, ICs and the isolators themselves, then check whether the two ground nets land in one region. Separately list every component with pins on both ground nets: the result should contain only the intended isolators. Both tests are cheap and neither depends on reading a long list correctly.
+
 ## Severity And Confidence
 
 - **P0 — blocker:** reverse polarity, absolute-maximum violation, missing mandatory thermal/power pad, wrong pin mapping, direct destructive contention, or another fault likely to damage hardware.

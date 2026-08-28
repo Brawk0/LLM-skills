@@ -36,12 +36,17 @@ The script is intentionally read-only. It reports encoding, line endings, balanc
 ## Safe Editing Rules
 
 - Prefer a byte-preserving exact-replacement script or a tool that can explicitly read and write the detected encoding. Do not let a default UTF-8 editor silently convert a Windows-1251 file.
-- For resistor display values, use the user's preferred `Ω` and `kΩ`, not a Latin-word spelling. If the source encoding cannot represent `Ω`, never accept replacement with `?`: explicitly convert the document to UTF-8 with BOM, retain a recoverable pre-conversion copy, and report the encoding change. When the user has not authorized an encoding change, stop and explain the conflict.
+- **Never change the file's encoding.** A Windows-1251 export must be written back as Windows-1251. DipTrace's Schematic ASCII importer decodes the file as a single-byte codepage and ignores a UTF-8 BOM, so saving as UTF-8 silently mojibakes every non-ASCII character in the document, not only the one being edited. Verified 2026-08 on a v45 export: `Ω`→`О©`, `µ`→`Вµ`, the sheet name `Лист 1`→`Р›РёСЃС‚ 1`, and Cyrillic `LibPath` values likewise; recovery required rebuilding from the pre-edit copy.
+- Because a single-byte codepage that must also carry Cyrillic cannot represent `Ω`, write ohms in ASCII as `Ohm` / `kOhm` / `MOhm` in the exchange file. The `.dch` is the master, not the ASCII: if the project needs the glyph, substitute `Ohm` → `Ω` inside DipTrace after import. A CSV/ASCII export of that project will then show `?` — expected, not a defect.
+- Before writing, assert that the whole result re-encodes to the source codepage with `errors='strict'`. A `UnicodeEncodeError` means a character was introduced that the format cannot carry.
 - Assert the pre-edit SHA-256 immediately before writing.
 - Count every source string and fail when an expected string is absent or occurs an unexpected number of times.
 - Keep CRLF when the source uses CRLF and avoid adding a BOM when the source has none.
 - For a value duplicated in `Components` and `CacheLib`, state whether both copies are being changed. The active placed component and the cached library copy are different scopes.
 - Never infer pin identity from the visual order. Use `StringNumber` and the net endpoint's pin ordinal.
+- Never identify a component by eye-scanning a long net member list — adjacent references such as `VD5`/`VD6` are trivially transposed, and a wrong reading produces a confident but false finding. Resolve every claim through `--ref` / `--net` or the net number before writing it down.
+- A part block contains **two** `UserFields` blocks: the component's own, then a copy inside the embedded `Pattern`. Read the first block after `(Part`. Collapsing all `UserField` lines of a part into one dict silently keeps the footprint copy and misreports the component's supplier data.
+- DipTrace re-annotates reference designators between exports. Diff two revisions by function and net membership, not by refdes.
 - Never infer an exposed thermal pad from a package name. Verify an actual `Pad` entry and its electrical or internal connection.
 - Keep an original hash or recoverable pre-edit copy until the edited file passes structural comparison and an application-level import check.
 

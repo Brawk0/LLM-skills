@@ -6,7 +6,9 @@ Use this reference when reconstructing or editing a DipTrace Schematic ASCII `.a
 
 - The file is a parenthesized tree headed by a source/version record such as `(Source "DipTrace Schematic ASCII" "v45")`.
 - Exports may use Windows-1251 and CRLF without a BOM. Encoding and newline style are part of the artifact and must be fingerprinted before editing.
-- Windows-1251 cannot encode the Greek omega `Ω`; a normal encoder replaces it with `?`. If `Ω`/`kΩ` is required, convert the complete document to UTF-8 with BOM only as an explicit, reported edit, retain a pre-conversion copy, and validate import in DipTrace. Do not mix UTF-8 bytes into an otherwise Windows-1251 file.
+- **The importer ignores a UTF-8 BOM and decodes the file as a single-byte codepage.** Converting the document to UTF-8 therefore does not gain Unicode — it corrupts every non-ASCII character in the file, because each multi-byte sequence is read back as one character per byte. Observed on a v45 round-trip: `Ω` (`CE A9`) → `О©`, `µ` (`C2 B5`) → `Вµ`, the sheet name `Лист 1` → `Р›РёСЃС‚ 1`, and Cyrillic `LibPath` values likewise. Keep the source encoding; verify with a strict re-encode before writing.
+- Windows-1251 cannot encode the Greek omega `Ω`, so an ASCII exchange file writes ohms as `Ohm` / `kOhm` / `MOhm`. The glyph belongs in the `.dch`, set there after import; the project's own CSV/ASCII exports will still render it `?`, which is a limitation of those exports rather than a defect.
+- A corrupted round-trip can damage more than the encoding: in the same v45 test the `!` characters vanished from most strings, breaking a `NC!!!___` do-not-populate marker. A clean same-codepage round-trip preserved them. Re-check any marker built from punctuation after every import.
 - Parentheses inside quoted strings are data, not tree delimiters. A validator must ignore quoted content and escaped quotes while calculating depth.
 - Paths can contain spaces, non-ASCII text, drive letters, UNC prefixes, and backslashes. Do not normalize them as component text.
 
@@ -101,7 +103,17 @@ Footprint data embedded in a placed component can contain records like:
 
 The first integer is a pad-object ordinal; the first quoted string is the physical pad number. Check the quoted pad-number set when validating a package. A 28-lead symbol named for an exposed-pad package does not prove that pad 29 or an unnamed thermal pad exists.
 
-Also inspect `IntCon` or equivalent internal-connect records. An exposed thermal pad must have both geometry and the intended electrical connection; a symbol-side ground pin cannot substitute for missing package copper.
+Also inspect `IntCon` or equivalent internal-connect records. An exposed thermal pad must have both geometry and the intended electrical connection; a symbol-side ground pin cannot substitute for missing package copper. `(IntCon 7 9)` binding pad 9 to the GND pad is what makes an ESOP-8 thermal pad netted; `(IntCon 1 2)` merges the two anode pads of a PowerDI-5 diode.
+
+### Judging a land pattern by geometry, not by its name
+
+Footprint names are user text and can be wrong or renamed wholesale. Measure instead. Pad geometry lives in `PadWidth` / `PadHeight` inside each `Pad` block, in the file's internal units; calibrate the scale against a footprint of known size (a 2220 land pad is about 5,3 mm across the body) and apply it to the rest.
+
+Chip sizes that share a length are indistinguishable by pad pitch: **1206 and 1210 are both 3,2 mm long**, so both lands sit at roughly 2,9 mm pitch and only the pad height differs — about 1,8 mm for 1206 against about 2,7 mm for 1210. Comparing pitch will pass a mismatched pair; comparing pad height catches it.
+
+Cross-check the pad geometry against the case size encoded in the MPN. Murata GRM: `GRM15`=0402, `GRM18`=0603, `GRM21`=0805, `GRM31`=1206, `GRM32`=1210. Yageo CC/RC carry the size in the code itself. A `GRM32…` part on a 1206 land is a real defect, and so is the reverse after someone "fixes" it by swapping the land.
+
+Renaming or replacing a footprint moves **every** component that used it. After such an edit, re-run the MPN-versus-land comparison across the whole design, not only the parts that were meant to change.
 
 ## Cache Library
 
