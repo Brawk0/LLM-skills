@@ -16,10 +16,24 @@ function Get-GitHubToken {
         }
     }
 
-    $credentialInput = "protocol=https`nhost=github.com`n`n"
-    $credentialLines = $credentialInput | git credential fill
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Git could not obtain a GitHub credential from the configured credential helper.'
+    # Do not pipe the request into `git credential fill`: PowerShell rewrites the
+    # line endings to CRLF on the way to a native command, so git never sees the
+    # empty LF-terminated line that closes the credential block and fails with
+    # "refusing to work with credential missing protocol field". Writing the
+    # request to a temp file with explicit LF and redirecting it is stable.
+    $requestFile = Join-Path ([System.IO.Path]::GetTempPath()) ([System.IO.Path]::GetRandomFileName())
+    try {
+        [System.IO.File]::WriteAllText(
+            $requestFile,
+            "protocol=https`nhost=github.com`n`n",
+            [System.Text.Encoding]::ASCII)
+        $credentialLines = & cmd /c "git credential fill < `"$requestFile`""
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Git could not obtain a GitHub credential from the configured credential helper.'
+        }
+    }
+    finally {
+        Remove-Item -LiteralPath $requestFile -Force -ErrorAction SilentlyContinue
     }
 
     foreach ($line in $credentialLines) {

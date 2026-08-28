@@ -58,6 +58,9 @@ git -C "C:\Users\User\Мой диск\Obsidian\.codex\skills" fetch origin main
 git -C "C:\Users\User\Мой диск\Obsidian\.codex\skills" rev-parse HEAD
 git -C "C:\Users\User\Мой диск\Obsidian\.codex\skills" rev-parse origin/main
 git -C "C:\Users\User\Мой диск\Obsidian\.codex\skills" status --short
+# quick_validate.py reads SKILL.md with the locale codec, so a Cyrillic
+# description crashes it with UnicodeDecodeError on Windows. Force UTF-8:
+$env:PYTHONUTF8 = "1"
 python "C:\Users\User\.codex\skills\.system\skill-creator\scripts\quick_validate.py" "C:\Users\User\Мой диск\Obsidian\.codex\skills\<skill-name>"
 git -C "C:\Users\User\Мой диск\Obsidian\.codex\skills" diff --cached --check
 $access = powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Users\User\Мой диск\Obsidian\.codex\skills\_base\skills\skill-management\scripts\Get-GitHubContributionMode.ps1" -AsJson | ConvertFrom-Json

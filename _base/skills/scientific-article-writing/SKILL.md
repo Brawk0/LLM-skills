@@ -26,6 +26,18 @@ Conversion mechanics live in `markdown-to-docx`; domain claim rules in
 
 Violating any of these is a defect, not a style choice.
 
+0. **Run `ru-language-purity` over every Russian manuscript before building
+   the deliverable.** Not after, not on request — before the DOCX/PDF is
+   produced, and again after any substantial rewrite. Loading a venue skill
+   does not substitute for it: a venue skill formats, it does not de-calque.
+   Text written from an English-language literature base inherits calques
+   silently, and they survive into the built file — `nonvolatile` came out as
+   «нелетучий» instead of the established «энергонезависимый» in a submitted
+   abstract and article because this pass was skipped (user correction,
+   28.08.2026). Before coining a Russian term from an English one, check the
+   vault's own translated conspects of the cited papers for the accepted
+   wording. State in the report that the pass was run.
+
 1. **Never invent facts.** No invented e-mails, affiliations, ORCIDs, grant
    numbers, DOIs, page numbers, material constants, or reviewer names.
    Search the vault and the article's data files first. If not found,
@@ -104,6 +116,31 @@ each PNG and check, against the template's example:
 
 Note: a DOCX open in Word locks the file; close it (or render a `_v2`
 copy). Do this render every time layout code changes, not just once.
+
+**The Markdown source in the vault is a deliverable too, and it gets the same
+two layers.** Checking the built DOCX is not enough: the user reads the note.
+Open it after every change and confirm the figures are actually visible there.
+
+Never invent a build-time placeholder syntax for figures. A marker such as
+`**РИСУНОК 1: file.png**`, expanded to a real image only by the conversion
+script, produces a correct DOCX and a broken note: the prose says «показана на
+рис. 1» over an empty line, which is exactly the defect
+`scientific-work/references/obsidian-style.md` forbids — a textual reference to
+a visual that is not present. Write figures as the vault's own embeds
+`![[file.png|width]]` and teach the converter to read that syntax, so the
+readable note and the build input are the same string (user correction,
+28.08.2026).
+
+Before embedding by short name, confirm the image filename is unique in the
+vault; generated figures are routinely copied into both a computation folder
+and a paper's `_media` folder, and a bare `![[junction_profile.png]]` then
+resolves ambiguously. Add the minimal folder path for those.
+
+A figure you generated yourself is checked against the itemised list in
+`scientific-work/references/obsidian-style.md` (Visuals) — coincident series
+hiding one another, a zero result drawn on the axis line, legend entries that
+cannot be found in the plot, text collisions, and the caption's claim being
+visually verifiable. Opening the PNG and glancing at it is not that check.
 
 ## Standard Workflow
 
@@ -435,3 +472,14 @@ history, and the user's instruction; otherwise stop and report.
   the user's explicit direction.
 - When this skill and a venue skill disagree, the venue skill wins - but
   say so explicitly in the report.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.

@@ -14,6 +14,7 @@ Build a simulator that reproduces the observable behavior of the selected real s
 - Read `references/source-fidelity-checklist.md` whenever the simulator must match real hardware, firmware, FPGA, a protocol, or production software.
 - Also read `references/scanning-lidar-lessons.md` for scanning, ranging, mirror, ray-grid, angular-resolution, sector, or LiDAR work.
 - Also read `references/windows-exe-release.md` when building or replacing a Windows executable.
+- Also read `references/host-software-bench-lessons.md` when the emulator is used to reproduce a defect in the production client software without hardware: memory growth, freezes, throughput cliffs, reconnect storms.
 
 ## Repository And Workspace Boundaries
 
@@ -101,3 +102,14 @@ Before materially editing this skill, applying self-learning updates, or publish
 After materially updating this skill, validate the shared base and adapters when feasible, run the learning-coverage audit, then commit and push the relevant skill changes to the owning repository by default unless the user explicitly says not to. Stage only relevant skill files and repository metadata. Split commits by semantic block when independent concerns justify it.
 
 If publishing encounters remote changes or merge conflicts, resolve them autonomously when the intended final meaning can be determined from the files, commit history, nearby rules, and the user's instruction. Preserve compatible rules, consolidate duplicates, rerun validation, commit the resolved result, and push. Stop only when resolution would require guessing unavailable technical meaning, exposing protected content, discarding user work, or using unavailable repository permissions.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.

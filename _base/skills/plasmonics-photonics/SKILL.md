@@ -16,7 +16,8 @@ For general Obsidian note style, checkpoint discipline, paper-note structure, te
 Plasmonics/photonics conceptual work must be captured back into the vault by default, applying `scientific-work` note-capture rules 12-14 even when that skill is not separately loaded. Do not wait to be asked, and do not answer only in chat:
 - for "объясни / разбери / что тут происходит / как это получается" explanations of PhD/vault material, create or update the nearest relevant note and answer with a link (scientific-work rule 12);
 - for a clarifying question about the content of an existing note - for example "это точная формула или приближение", "откуда берётся эта формула", "почему одна формула, если параметр/χ⁽³⁾ не универсален", "что здесь означает этот множитель" - after answering, add a compact clarification to the relevant section of the source note, following `references/obsidian-style.md` from the shared `scientific-work` skill (rule 14);
-- for a stated physical guess or hypothesis, record it in the nearest appropriate note with an explicit status (rule 13).
+- for a stated physical guess or hypothesis, record it in the nearest appropriate note with an explicit status (rule 13);
+- whenever a note in this domain is opened or edited for any reason, run the illustration check from the `Visuals` section of `references/obsidian-style.md` over the whole note, including notes written before that rule existed. In this domain the missing picture is almost always one of five: a mode profile, a dispersion branch, a geometry/layer stack, a loss budget, or a state-paired comparison. Search the vault first — earlier paper notes and calculation folders usually already hold a usable figure — and caption a reused figure for the geometry and materials it was actually computed for.
 
 Skip the note update only when the user explicitly asks not to write files, or the question is clearly casual and unrelated to vault content. When a task begins touching vault notes, load the `scientific-work` note-capture and `obsidian-style` rules if they are not already in context, so this behavior does not depend on remembering to open that skill.
 
@@ -113,8 +114,19 @@ For literature and article claims:
 - frame EIM/ЭДП work as a failure-aware screening workflow when loss metrics diverge from FEM;
 - distinguish EIM/effective-index waveguide reduction from EMA/effective-medium approximation only when partial crystallization, intermediate PCM states, or an EMA material model is actually in scope; do not introduce an EMA disclaimer into a paper that compares only amorphous and crystalline states;
 - cite primary papers or official solver documentation for claims about device performance, solver behavior, or method limitations.
-- before finalizing a plasmonics/photonics article or conference paper, follow the `scientific-work` final GPT/ChatGPT review rule; a final manuscript should not be treated as ready after Codex-only review.
+- before finalizing a plasmonics/photonics article or conference paper, follow the `scientific-work` final GPT/ChatGPT review rule when running as Codex. In Claude Code that rule does not apply: run the independent source-backed verification pass described in the same section instead, and do not flag the missing GPT review as a blocker.
 
 ## Detailed Reference
 
 Read `references/workflow.md` for substantial work involving articles, literature reviews, EIM/ЭДП benchmarking, PCM material audits, COMSOL/FEM validation, or mode-branch troubleshooting.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.

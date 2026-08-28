@@ -36,7 +36,7 @@ If publishing encounters remote changes or merge conflicts, resolve them autonom
 5. When the user gives a durable requirement about scientific-work formatting, term-note capture, note style, workflow, source use, modeling hygiene, response shape, presentation preparation, or AI/vault tooling, add it to this skill or the relevant reference file without waiting for a separate reminder. Treat explicit user requirements as candidates for skill updates by default when they are likely to recur. After updating the skill, explicitly tell the user what was added and where.
 6. Answer in Russian by default. Keep English scientific terms next to Russian terms when precision benefits from it.
 7. If confidence is limited, mark the statement as a hypothesis or a question for checking instead of presenting it as fact.
-8. When the user asks for a definition or explanation of any term or concept - scientific, technical, or general (a business, project-management, or everyday word counts) - search the whole vault (not only the nearest folder) for both existing definitions in any note and an existing note whose title matches the term, even if that note is empty or only a placeholder. Always create or update a standalone term note for the term: if a matching term note already exists, fill or improve it; if no matching note exists, create it. Whenever the user asks for a definition and no such note exists yet, creating the note is mandatory, not optional (explicit user requirement, 2026-07-06). Place it in the nearest obvious topic folder, or in `Проекты` / the general vocabulary area when the term is not tied to a specific topic. The term note must include a concise definition and its meaning; add physical/engineering sense, key formula, or applicability when relevant. If existing definitions of the same term were found in other files, add links to those files or sections inside the term note, in addition to the new concise definition. Then answer with a link to the standalone term note and mention which existing notes were used as source definitions.
+8. When the user asks for a definition or explanation of any term or concept - scientific, technical, or general (a business, project-management, or everyday word counts) - search the whole vault (not only the nearest folder) for both existing definitions in any note and an existing note whose title matches the term, even if that note is empty or only a placeholder. Always create or update a standalone term note for the term: if a matching term note already exists, fill or improve it; if no matching note exists, create it. Whenever the user asks for a definition and no such note exists yet, creating the note is mandatory, not optional (explicit user requirement, 2026-07-06). Place it in the nearest obvious topic folder, or in `Проекты` / the general vocabulary area when the term is not tied to a specific topic. The term note must include a concise definition and its meaning; add physical/engineering sense, key formula, or applicability when relevant. If existing definitions of the same term were found in other files, add links to those files or sections inside the term note, in addition to the new concise definition. Give the term note an illustration as well, following the "Visuals" search order in `references/obsidian-style.md`: look for an existing figure in the vault first, then generate one, then crop from a source PDF, and only then look on the web. Then answer with a link to the standalone term note and mention which existing notes were used as source definitions.
 9. When writing or refactoring local Obsidian notes, any reusable scientific or technical term definition must live in a standalone term note. Do not make an inline paragraph, NTO section, project note, or literature note the only source of truth for a term definition; those notes should use `[[Term]]` links and, when needed, only a short context-specific wording. This applies during project mentoring and lesson-note writing too: do not create per-project glossary/dictionary notes as the source of truth for definitions; a project-level term list may exist only as `[[Term]]` links to the standalone term notes (explicit user requirement, 2026-07-20).
 10. When creating or filling a term note because the user's question arose from a specific local note or passage, and it is clear where the new term belongs, also update that source note to link the term naturally with an Obsidian link or alias. If the source context is not clear, do not invent backlinks.
 11. When the user explicitly asks to improve skills during a task, apply compact reusable skill updates as soon as the lesson is clear and safe, then continue the task and report which skill or reference changed.
@@ -48,6 +48,12 @@ If publishing encounters remote changes or merge conflicts, resolve them autonom
 17. When giving a reusable engineering answer such as datasheet-based component selection, component-value calculation, circuit explanation, or a similarly substantive technical response, create or update a Markdown note in `Work\Database` in the same turn even when the user did not separately request file output. Search for an existing canonical note first, avoid duplicates, and link the resulting note in the final response. A folder explicitly named by the user overrides `Work\Database`; skip the write only when the user explicitly asks for a chat-only answer. This placement rule overrides the nearest-folder default in item 12 for this class of answers (explicit user requirement, 2026-08-18).
 
 ## GPT-Assisted Complex Analysis
+
+**This whole section is a Codex-only workflow. When running as Claude Code, skip it entirely** (explicit user requirement, 2026-08-22). The GPT/ChatGPT second opinion is reached through the Codex in-app browser, which Claude Code does not have. Do not report its absence as a limitation, do not record it as an outstanding TODO in a checkpoint or review note, and do not tell the user a manuscript is unready because the GPT pass is missing — that manufactures a blocker the user cannot clear from this environment. Mention the channel only if the user asks for GPT by name.
+
+What replaces it in Claude Code is not "nothing": run an **independent source-backed verification pass** instead, and treat that as the required second opinion. In practice that means several parallel searches attacking the question from different angles, verification of every headline number against the primary source rather than the vault's own summary, and — for novelty questions specifically — negative-space citation analysis: pull the complete citing list of each anchor paper and check who is *absent* from it, since that is what turns "I found nothing" into evidence. Mark every finding as verified from full text, from abstract, or unverified, and never let a DOI through that was not resolved against Crossref, OpenAlex, or arXiv. This substitute is not a downgrade: on 2026-08-22 it caught a factual error in the agent's own earlier chat claim, surfaced a paper the vault's deep-research review had missed, and independently confirmed an arithmetic error the review had flagged in a published article.
+
+Everything below applies to Codex only.
 
 When the user asks for complex scientific, literature, novelty, strategy, or research-planning analysis, do not rely only on Codex's internal reasoning. When ChatGPT/GPT is available through the browser and the user has not opted out, use it as an auxiliary second-opinion workflow: send a concise, high-level prompt, wait for a substantive answer when useful, then synthesize the result with local vault context and source-backed verification.
 
@@ -94,6 +100,33 @@ Do not store secrets, credentials, private raw datasets, unpublished full measur
 - Icarus Verilog, Verilator, GHDL, vendor lint, or another simulator may be used for fast preliminary triage when useful, but never report their result as the final verification of the user's HDL. Label it preliminary until ModelSim 10.5b passes.
 - Prefer deterministic batch checks: create/map a clean work library with `vlib`/`vmap`, compile SystemVerilog with `vlog -sv`, compile VHDL with the appropriate `vcom` standard flag, and run `vsim -c` with a finite `run` command or `run -all` followed by an explicit quit. Preserve the first ModelSim error and the exact source/tool version in the project checkpoint or verification note.
 
+## Computational Artifacts Leave The Local Disk
+
+Work that lives only in a local scratch folder such as `C:\workspace\...` is work that will be
+lost - to the next PC, the next reinstall, or simply to forgetting it exists. Anything a note's
+numbers depend on belongs in the synced vault, next to the note that cites it (explicit user
+requirement, 2026-08-26).
+
+- Sync, in this order of priority: the model-building script (`.java`, `.py`, `.m`) - it IS the
+  model and reproduces everything else; the exported result tables (`.csv`); the figures and the
+  script that draws them; and the model file itself, stripped.
+- **Model files are stripped, not skipped.** `scripts/Compress-MphModel.ps1` clears solution data,
+  mesh data, derived tables and the edit history. Measured on this vault's own models the result
+  is 2-5 % of the original: a 181 MB solved model becomes a few megabytes and syncs without a
+  second thought. Geometry, materials, physics, mesh settings, study and solver settings all
+  survive, so the stripped file opens and re-solves on another PC.
+- Do not use "the script rebuilds it" as a reason to keep no model at all. The script needs the
+  same solver version and a working toolchain; the stripped `.mph` opens in the GUI and is the
+  fastest way for a person to see what was actually solved.
+- **Never strip the only copy of a model that a script did not generate** - one received from
+  someone else, or built interactively. Keep the original too, and put both in the vault.
+- Debris is not an artifact: `.class`, `.status`, `.recovery`, `*_Model.mph` duplicates, and
+  batch logs of successful runs. Delete them instead of syncing them. Large raw field exports
+  (dense `.csv` grids of E and H) are reproducible from the model in minutes - keep the analysis
+  tables, not the grids.
+- Say in the note where the model lives and how to re-run it, so the artifact and the text that
+  depends on it cannot drift apart.
+
 ## Local Utility Scripts
 
 - Prefer the reusable scripts in `scripts/` over ad hoc PowerShell one-liners for routine vault work:
@@ -105,11 +138,28 @@ Do not store secrets, credentials, private raw datasets, unpublished full measur
   - `scripts/Search-Vault.ps1` searches the vault with `rg`, standard service-folder exclusions, and UTF-8 output. Canonical call: `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Search-Vault.ps1 -Query "<regex>" -Roots "Работа\Лидар"`; use `-AllVault` for the whole vault, `-Context N`, `-Literal`, and `-FilesOnly` as needed. `-CaseSensitive` is a switch, so omit it unless enabling case-sensitive search. Compatibility aliases exist: `-Pattern` for `-Query` and `-Path` for `-Roots`, but prefer the canonical names.
   - `scripts/Find-Term.ps1` checks for matching note titles and content definitions for a scientific or technical term.
   - When searching for a Russian term, never trust case-insensitive matching: `grep -i`, `rg -i`, and `find | grep -i` regularly fail to case-fold Cyrillic under Git Bash/MSYS, so a search for `стек` misses `Стек.md` and the run wrongly concludes that no note exists. Always search both capitalizations explicitly (`grep -E "Стек|стек"`) or use a filename glob, and check inbound `[[links]]` before creating a new term note (learned 2026-07-23).
+  - A multi-branch alternation can silently return a DIFFERENT and incomplete result set than the same terms searched one at a time. Reproduced 2026-08-18 on this vault: the single pattern `ФДП` returned the two notes that actually contain it, while `ФДП|фдп|формулы для программирования|Формулы для программирования` - a superset by construction - returned two unrelated JSON files and neither note. Both runs reported "Found 2 files", so nothing looked wrong. The mechanism was not identified; treat it as unreliable rather than assuming a fix. Practical rule for the existence check that precedes creating a term note: run each spelling as its own search AND cross-check with a filename `Glob` (`**/*Термин*`), and never conclude "no note exists" from one alternation query - that false negative is exactly what produces a duplicate term note.
   - `Search-Vault.ps1` falls back to `Select-String` when `rg` is absent; that fallback must use `-LiteralPath`, because vault filenames contain `[`, `]` and `(` and `Select-String -Path` rejects them with `WildcardPatternException` (fixed 2026-07-23).
   - `scripts/Split-ImageTiles.ps1` cuts a photographed poster, document, schematic, or scan into an overlapping grid of upscaled tiles (`-Cols 3 -Rows 3 -Zoom 3 -Overlap 0.12`) so small print becomes readable. Vision reading scales with rendered pixels per glyph, so cropping a region and upscaling it genuinely recovers text that is illegible in the whole-image view, even though upscaling adds no information. Read the full image first for layout, then every tile for content.
   - `scripts/Get-ImageCrop.ps1` crops an arbitrary rectangle and upscales it, with an optional `-Sharpen` contrast boost for faded or yellowed print; use it after the tile pass to re-read one specific caption, parameter box, axis label, or imprint line. Keep crops narrow: a very wide crop gets downsampled again on display and reads worse than a tight one at higher `-Zoom`.
   - `scripts/Convert-SvgToPng.ps1` renders an SVG to PNG with headless Chrome for visual QA of generated figures and reconstructed posters. Gotcha: when the SVG root uses physical units (`width="841mm"`), Chrome expands them at 96 dpi, so 841 mm becomes 3177 px; passing a smaller `-Width`/`-Height` silently screenshots only the top-left corner instead of scaling the page. Compute the window size as millimetres times 3.7795 (learned 2026-08-12 while reconstructing the 1966 «Электровакуумные и полупроводниковые приборы» poster series).
   - When reconstructing a damaged or low-resolution source into a printable replacement, keep one rule visible in both the artefact and the note: print what was read, mark what was reconstructed by inference, and replace what is unrecoverable with an ellipsis or omission. Never fill an unreadable field by analogy with a sibling document — a plausible invented archival code is worse than a visible gap, because it cannot later be distinguished from a genuine reading.
+  - `scripts/Compress-MphModel.ps1` strips COMSOL `.mph` models so they can be synced instead of
+    left on one PC: it clears solution data, mesh data, derived tables and edit history, keeping
+    geometry, materials, physics and all settings. Dry run by default, `-Apply` to write,
+    `-Recurse` over a directory, `-MinMB` to skip already-small files, `-KeepMesh` when the mesh
+    is expensive and irreproducible. Companion `scripts/StripMph.java` is compiled on demand.
+    Two traps it exists to remember: `comsolcompile` emits only the top-level class, so a model
+    script must contain **no anonymous inner classes** (otherwise the run dies with "Error
+    running java class - Detail: Foo$1"), and the bundled compiler predates effectively-final
+    capture, so anything a nested construct touches has to be declared `final` explicitly.
+  - `scripts/Publish-ComputeFolder.ps1` moves a whole local computation folder into the vault:
+    it copies the sources, result tables and figures, runs the models through the stripper, and
+    writes a `MANIFEST.md` saying where the copy came from. It leaves behind batch debris
+    (`.class`, `.status`, `.recovery`, `*_Model.mph`) and dense field exports. The bulk filter is
+    by SIZE, not by name - `-MaxCsvMB` defaults to 1 MB - because these dumps arrive under a new
+    name from every script, while a table a person reads is kilobytes and a sampled field is
+    megabytes. On the 2026-08 queue that separated 21 MB worth keeping from 100 MB regenerable.
   - `scripts/Find-ExistingPaperPdf.ps1` checks whether a paper PDF already exists in the vault before downloading, using DOI, DOI-safe fragments, DOI suffixes, year, and stable title words; use it before browser or publisher downloads to avoid duplicates.
   - `scripts/Download-OpenAccessPapers.ps1` downloads legitimately available open-access PDFs from DOI lists by querying OpenAlex/Crossref, validating PDF signatures, and writing a JSON manifest. It does not bypass paywalls or use university credentials; use the browser workflow in `references/paper-analysis.md` when the user wants to authenticate through institutional access.
   - `scripts/Install-ObsidianLocalRestApi.ps1` installs or updates the Obsidian Local REST API plugin release files inside the synced vault.
@@ -125,10 +175,11 @@ Do not store secrets, credentials, private raw datasets, unpublished full measur
 ## Load References
 
 - Read `references/vault-map.md` when choosing where to search in the vault or when starting an unfamiliar scientific task.
-- Read `references/obsidian-style.md` before creating or editing scientific Obsidian notes.
+- Read `references/obsidian-style.md` before creating or editing scientific Obsidian notes. Its "Visuals" section is not optional polish: every note, term notes included, needs an illustration unless there is honestly none to add, and the search order is vault first, then generate it yourself, then crop from the source PDF, then the web.
 - Read `references/paper-analysis.md` when summarizing, translating, reviewing, extracting ideas from, or comparing papers.
 - Read `references/publisher-site-lessons.md` when downloading papers through publisher, DOI, repository, or institutional-access sites, and update it after learning reusable site-specific behavior.
 - Read `references/comsol-workflow.md` for COMSOL, CST, FEM, mode-analysis, `.mph`, Java automation, or numerical-validation tasks.
+- Read `references/open-source-em-solvers.md` before reaching for an open-source EM solver, when COMSOL is unavailable, or when a second independent solver is needed to check a result. It records which packages were actually validated on this machine and which were evaluated and rejected, with the reproducible failure reason for each.
 - Read `references/obsidian-ai-integration.md` when connecting Codex or another AI assistant to the vault through Obsidian Local REST API, MCP, semantic search, or Obsidian-native indexing tools. For nontrivial API/MCP work, also read `references/obsidian-ai-integration-lessons.md` and update it when the task reveals a reusable API lesson.
 - Read `references/presentation-workflow.md` when preparing scientific, technical, or popular-science talks, slide plans, speaker scripts, or presentation source notes.
 

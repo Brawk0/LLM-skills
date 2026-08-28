@@ -1,4 +1,4 @@
-[submodule "nto-formatting"]
-	path = nto-formatting
+[submodule "corporate"]
+	path = corporate
 	url = https://github.com/ak-tech-electronics/codex-skills.git
 	branch = main

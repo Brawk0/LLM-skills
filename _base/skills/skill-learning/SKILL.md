@@ -75,3 +75,14 @@ Before finishing a learning update:
 After adding, importing, or broadly updating skills, run `scripts/Test-SkillLearningCoverage.ps1` from this shared base. The script finds every canonical `_base/skills/<skill-name>/SKILL.md` under the selected repository, including initialized nested repositories, and verifies that each one either points to the shared `skill-learning` policy or has an actionable learning section with durable or reusable lesson language.
 
 Thin Codex, Claude, and plugin adapters inherit behavior from their canonical shared base and should not duplicate the learning policy. Fix a reported gap in the canonical shared base, then rerun the audit until it exits successfully.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.

@@ -113,9 +113,62 @@ Distinguish three levels of mode selection and report the level actually used:
 - choosing the complex root nearest to a reference root is root continuation and can reject an obvious branch swap, but it is not field-based proof that two states contain the same physical mode;
 - physical mode tracking requires several candidate modes at each sufficiently small parameter step, consistent field normalization, maximum normalized field overlap, and checks of symmetry, confinement, and power distribution.
 
+Continuation is also the way to separate two branches that become degenerate in
+some limit. Coupled thin-film SPP branches merge into the single-interface mode as
+the film thickens, so seeding both from one guess at large thickness returns the
+same root twice; start where the branches are far apart and step towards the
+degenerate limit. When the two branches obey separate parity equations, continue
+each equation on its own. Watch for a solver that silently returns a higher-order
+mode outside a single-mode window: a bisection on a "monotonic" modal index breaks
+there, because monotonicity holds only for the fundamental.
+
 For a large state change such as amorphous-to-crystalline PCM, introduce intermediate numerical continuation steps. If the best overlap is low or two candidates have comparable overlap, reduce the step and temporarily track both solutions instead of forcing a single assignment. Treat an interpolation used only for continuation as a numerical path, not as a physical model of partial crystallization unless an EMA or another material model has been defined.
 
 When reconstructing a bound-mode field from transfer-matrix coefficients, enforce the forbidden growing-wave coefficient in each exterior half-space as exactly zero before normalizing or integrating the field. A small root residual can multiply an exponentially growing tail over the numerical padding and create false confinement jumps or low field overlaps. Verify the result by reducing the continuation step and increasing the field-integration padding.
+
+## Validating A Reconstructed Field
+
+A dispersion root that matches literature does not prove the reconstructed field
+vector is right. Quantities normalised by their own power - overlap integrals,
+confinement factors, propagation loss - are blind to a constant factor on a single
+field component, so a scaling error in one component can survive every check a
+mode solver usually runs and only surface when the field is plotted or fed to a
+downstream calculation.
+
+Substitute the reconstructed `E` and `H` back into Maxwell's equations. Check the
+**order of the residual in the grid step, not its magnitude**. The magnitude is
+set by the step, and in a plasmonic problem the step is dictated by the metal skin
+depth of tens of nanometres, so any absolute threshold has to be retuned per
+geometry and will mask a real error. A correct field leaves only the
+finite-difference error, which falls by four when the grid is halved; a wrong
+formula gives a step-independent residual. Report the observed order.
+
+Three ways this check is easy to get wrong, all seen in practice:
+
+- refine every axis at once. Refining only the transverse grid leaves the
+  longitudinal contribution constant and drives the observed order to zero, which
+  looks like a broken field but is a broken test;
+- make the validation grid resolve the thinnest metal layer. If no point inside a
+  14 nm film carries a full stencil, the metal is excluded from the residual at
+  the coarse level and re-enters at the fine level with its own large error, and
+  the observed order comes out negative;
+- exclude stencils that straddle a material interface. Normal `E` is discontinuous
+  there and the derivative of tangential `E` is kinked, so a finite difference
+  across an interface measures the discontinuity, not the residual.
+
+Add one independent scale check that does not involve derivatives at all, for
+example the ratio of field components in a cladding against its closed form.
+
+**An orthogonality test on a mirror-symmetric structure proves nothing.** In a
+symmetric stack the coupled modes have opposite parity, the integrand is odd, and
+the conjugated and unconjugated overlaps both vanish - by symmetry, not because
+either form is the right one. A wrong choice of form passes such a test and
+survives until the first asymmetric problem. Test on a structure that is both
+lossy and free of mirror symmetry; breaking the cladding indices apart is enough.
+For a 14 nm gold film a cladding asymmetry of 2e-3 separates the two forms by
+five orders of magnitude, while both stay at 1e-11 in the symmetric case. Note
+that a long-range mode unbinds quickly with asymmetry, so check that the modes
+are still bound at the asymmetry used.
 
 ## Literature And Article Claim Control
 

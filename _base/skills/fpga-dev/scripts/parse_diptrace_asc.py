@@ -69,6 +69,63 @@ with open(ASC, encoding='cp1251', errors='replace') as f:
                     pins.setdefault(cur_part[1], []).append(pin)
                     in_pin = False
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Кто сидит на цепи: разбор со стороны ЦЕПЕЙ, а не выводов.
+#
+# Разбор выше идёт от вывода: для заданных RefDes он собирает, к какой цепи
+# каждый вывод подключён. Этого хватает, когда элемент известен, — «покажи
+# распиновку D7». Но обратный вопрос встречается не реже: «кто ещё сидит на
+# цепи FLASH_SPI_~CS» — и на него разбор от вывода не отвечает вовсе, потому
+# что перебирать ради него все девятьсот элементов пришлось бы вручную.
+#
+# В файле связь записана СО СТОРОНЫ ЦЕПИ: внутри блока (Net "имя") лежит
+# список (pt <номер элемента> <номер вывода>). Номер элемента — это порядковый
+# номер блока (Part ...) в файле, считая с нуля; никакого иного ключа там нет.
+#
+#   python parse_diptrace_asc.py файл.asc --net FLASH_SPI
+#
+# Образец сопоставляется подстрокой и без учёта регистра: имена цепей в этом
+# формате длинные и включают вывод ПЛИС — «M9_IOR34A_FLASH_SPI_~CS», — и точное
+# совпадение требовало бы знать его заранее.
+
+def _members_by_net(path, pattern):
+    part_order = []
+    net_members = []
+    cur_net = None
+    with open(path, encoding='cp1251', errors='replace') as f:
+        for line in f:
+            m = re.match(r'^    \(Part "([^"]*)" "([^"]*)"', line)
+            if m:
+                part_order.append((m.group(2), m.group(1)))
+                continue
+            m = re.match(r'^    \(Net "([^"]*)"', line)
+            if m:
+                cur_net = m.group(1)
+                net_members.append((cur_net, []))
+                continue
+            if cur_net is not None and net_members:
+                for pt, pin in re.findall(r'\(pt (\d+) (\d+)\)', line):
+                    net_members[-1][1].append((int(pt), int(pin)))
+    return part_order, net_members
+
+
+if len(sys.argv) > 2 and sys.argv[2] == '--net':
+    pattern = sys.argv[3] if len(sys.argv) > 3 else ''
+    order, members = _members_by_net(ASC, pattern)
+    shown = 0
+    for name, pts in members:
+        if pattern.lower() not in name.lower():
+            continue
+        who = []
+        for pt, pin in pts:
+            ref, part = order[pt] if pt < len(order) else ('?', '?')
+            who.append(f'{ref}({part}).{pin}')
+        print(f'{name}: ' + ', '.join(who))
+        shown += 1
+    if shown == 0:
+        print(f'цепей с образцом "{pattern}" не найдено')
+    sys.exit(0)
+
 for refdes in sorted(WANT):
     plist = pins.get(refdes, [])
     print(f'=== {refdes} ({parts_seen.get(refdes, "?")}): {len(plist)} pins ===')

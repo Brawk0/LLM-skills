@@ -20,6 +20,7 @@ python ".\scripts\convert_md_to_docx.py" "input.md" --output "output.docx" --ref
 
 ## Artifact Rules
 
+- Read figures from the source's own embed syntax; do not require a custom marker. When the source is an Obsidian note, `![[file.png|width]]` is the input the converter must accept, expanding it to a real path and a page-appropriate width. Introducing a build-only placeholder (`**РИСУНОК 1: file.png**`) splits the artifact from its source: the DOCX comes out correct while the note the user actually reads shows a caption over an empty line. Keep one string that both a human and the script understand (lesson 28.08.2026).
 - Never let Markdown escape syntax become visible Word text. Convert `air\ |\ PCM\ |\ SiO_2` into readable text such as `air | PCM | SiO_2` with the `2` rendered as a subscript or Word equation text.
 - Do not place layer-stack, equation, or list lines immediately after a figure caption unless they are part of the caption. If Markdown conversion causes them to appear under the caption, move them back into the body text before or after the figure.
 - Render scientific tokens such as `SiO_2`, `lambda_0`, `k_0`, `n_eff`, `L_pi`, and `L_power` as Word subscripts, Unicode-safe text, or equation objects. Plain underscores are acceptable only in file names, code, identifiers, or explicit user-requested literal text.
@@ -116,3 +117,14 @@ Before materially editing this skill, applying self-learning updates, or publish
 After materially updating this skill, validate it when feasible, then commit and push the relevant skill changes to the owning repository by default unless the user explicitly says not to. Stage only relevant skill files and repository metadata.
 
 If publishing encounters remote changes or merge conflicts, resolve them autonomously when the intended final meaning can be determined from the files, commit history, nearby rules, and the user's instruction. Preserve compatible rules from both sides, consolidate duplicates, rerun validation, commit the resolved result, and push. Stop only when resolution would require guessing unavailable technical meaning, exposing protected content, discarding user work, or using unavailable repository permissions.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.

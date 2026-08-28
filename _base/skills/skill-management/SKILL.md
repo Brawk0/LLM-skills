@@ -42,7 +42,15 @@ Local git repository path:
 C:\Users\User\РњРѕР№ РґРёСЃРє\Obsidian\.codex\skills
 ```
 
-After materially creating or updating user-owned skills, commit and publish the skill changes to this repository by default unless the user explicitly says not to. For `fufellen/LLM-skills`, follow the root `README.md` contribution workflow. An authenticated repository owner or administrator with a confirmed active bypass may push directly to `origin/main`; a branch and pull request are optional for that account. Every other account must use `main_<github-login>` and a pull request: push the branch to the source repository when write access exists, or create a fork and push it there when write access is absent or unknown. If administrator bypass cannot be confirmed, do not push to `main`. GitHub CLI is not required for plain Git operations when a configured credential helper can authenticate the push; create any required pull request through an available connector, REST API, website, or `gh`. Before committing:
+After materially creating or updating user-owned skills, commit and publish the skill changes to this repository by default unless the user explicitly says not to. For `fufellen/LLM-skills`, follow the root `README.md` contribution workflow. An authenticated repository owner or administrator with a confirmed active bypass may push directly to `origin/main`; a branch and pull request are optional for that account. The branch protection on `main` exists for outside contributors, not for the owner: the repository is published for shared use, but the owner is its sole maintainer and does not open pull requests against their own work. Consequently a successful owner push prints a remote notice of this shape, and it is the EXPECTED outcome, not a defect:
+
+```text
+remote: Bypassed rule violations for refs/heads/main:
+remote: - Changes must be made through a pull request.
+remote: - Cannot update this protected ref.
+```
+
+Do not report that notice as a problem, do not ask whether to switch to pull requests, and do not propose relaxing the protection rule (user clarification, 2026-08-18). Report the pushed commit range and continue. Every other account must use `main_<github-login>` and a pull request: push the branch to the source repository when write access exists, or create a fork and push it there when write access is absent or unknown. If administrator bypass cannot be confirmed, do not push to `main`. GitHub CLI is not required for plain Git operations when a configured credential helper can authenticate the push; create any required pull request through an available connector, REST API, website, or `gh`. Before committing:
 
 Before choosing among those workflows, run `_base/skills/skill-management/scripts/Get-GitHubContributionMode.ps1` from the repository root. Use its machine-readable `AccessClass`, `DirectMainAllowed`, `RequiresFork`, `RequiresPullRequest`, and `WorkingBranch` fields. The script checks the authenticated GitHub account, effective repository permissions, active default-branch rulesets, and the administrator bypass without printing the credential. Do not infer access from a clone, login name, or public read access. If the check cannot authenticate or complete, fail closed: do not push to `main` and treat source-repository write access as unconfirmed.
 
@@ -324,3 +332,14 @@ Use this skill for general rules about skill storage and synchronization. Use do
 - Christian, church, Bible, Sunday school, youth, sermon, camp, and devotional deck content rules: `christian-presentations`, used alongside `presentation-creation`;
 - presentation-specific behavior for research talks: `scientific-work/references/presentation-workflow.md`, used alongside `presentation-creation` when relevant;
 - Obsidian REST/MCP bridge details: `scientific-work/references/obsidian-ai-integration.md`.
+
+## Общая машина: мышь возвращать туда, откуда взял
+
+Работа идёт за тем же компьютером, за которым в этот же момент сидит человек.
+Если для дела понадобилось двигать указатель — запомнить его положение **до
+первого движения** и вернуть на то же место, закончив; не в конце всей задачи, а
+в конце каждого захода к мыши. То же с передним планом: окно, выведенное наверх
+силой, обязано уступить обратно тому, что было впереди.
+
+Подробнее и о том, что из этого следует для замеров с экрана —
+`_base/skills/_shared/shared-machine-etiquette.md`.

@@ -37,7 +37,7 @@ Client side afterwards: `ssh -p 2222 root@<ip>`.
 
 ## SSH throttling can be per-PROTOCOL and per-source-IP, not per-port
 
-After moving sshd to a non-standard port, the same `banner exchange timeout` on the new port means the filter recognizes the SSH protocol itself (DPI on the banner), keyed to the **source IP** (a shared VPN exit that got flagged — retry storms accelerate this). Definitive test: `journalctl -u ssh --no-pager -n 8` on the server (via provider console) right after a client attempt — **no log entry = packets filtered upstream**, nothing on the server will fix it. Working fix: change the VPN server/location (new exit IP). Port change is still worth keeping — it silences bot brute-force noise.
+After moving sshd to a non-standard port, the same `banner exchange timeout` on the new port means the filter recognizes the SSH protocol itself (DPI on the banner), keyed to the **source IP** (a shared VPN exit that got flagged — retry storms accelerate this). Definitive test: `journalctl -u ssh --no-pager -n 8` on the server (via provider console or via a sibling server) right after a client attempt. **No log entry means the packets are filtered before sshd** and nothing on the server will fix it. Log entries are NOT an all-clear, though: when the filter drops the server's reply instead of the client's request, the attempts arrive, sshd logs `kex_exchange_identification: Connection closed by remote host`, and the client still sees a banner timeout. Either way the host is innocent — check that its load is zero and your own rate-limit DROP counters are untouched before touching anything. Working fix: change the VPN server/location (new exit IP). Port change is still worth keeping — it silences bot brute-force noise.
 
 ## Driving the provider noVNC console programmatically (via browser JS)
 
@@ -109,3 +109,16 @@ Try this BEFORE suspecting the remote service. Related workaround if outbound po
 ## Server identity check
 
 `ssh -v ... 2>&1` prints `remote software version OpenSSH_<x> Ubuntu-<y>` — quick confirmation of the actual Ubuntu release before running version-dependent setup.
+
+## Two managed servers: make each a fallback path to the other
+
+When a deployment has two servers that can reach each other, wire the tooling to try the direct path first and fall back through the sibling automatically. This turns the single most common failure of this environment — the workstation's source IP getting SSH-filtered mid-path — from a work stoppage into a logged retry.
+
+The failure looks like a dead server and is not one. `Test-NetConnection <ip> -Port <sshport>` returns `True`, but the client reports `kex_exchange_identification: read: Connection timed out` (or paramiko's `Error reading SSH protocol banner`). Confirm before blaming the host: reach it from the other server and check `uptime`, `systemctl is-active ssh`, the DROP counters of your own rate-limit rules, and `journalctl -u ssh`. If the journal shows the attempts arriving and dying at banner exchange while load is zero, the host is healthy and the path is filtered.
+
+Two properties make the fallback possible, and both are design decisions worth taking deliberately at build time:
+
+- Do NOT pin the second server's SSH to the first server's address, however tempting it looks when hardening. Pinning couples the two failures: lose the primary and you lose management of the secondary.
+- Filtering is keyed to the source IP, so any different exit works. If the deployment is itself a VPN, connecting through it also clears the block.
+
+Heavy automation accelerates the flagging — dozens of short-lived SSH sessions in an hour is enough. Reuse one connection for a batch of commands where possible instead of opening one per command.
