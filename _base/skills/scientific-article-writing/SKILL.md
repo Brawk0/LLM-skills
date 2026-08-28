@@ -26,6 +26,18 @@ Conversion mechanics live in `markdown-to-docx`; domain claim rules in
 
 Violating any of these is a defect, not a style choice.
 
+0. **Run `ru-language-purity` over every Russian manuscript before building
+   the deliverable.** Not after, not on request — before the DOCX/PDF is
+   produced, and again after any substantial rewrite. Loading a venue skill
+   does not substitute for it: a venue skill formats, it does not de-calque.
+   Text written from an English-language literature base inherits calques
+   silently, and they survive into the built file — `nonvolatile` came out as
+   «нелетучий» instead of the established «энергонезависимый» in a submitted
+   abstract and article because this pass was skipped (user correction,
+   28.08.2026). Before coining a Russian term from an English one, check the
+   vault's own translated conspects of the cited papers for the accepted
+   wording. State in the report that the pass was run.
+
 1. **Never invent facts.** No invented e-mails, affiliations, ORCIDs, grant
    numbers, DOIs, page numbers, material constants, or reviewer names.
    Search the vault and the article's data files first. If not found,
