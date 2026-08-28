@@ -58,6 +58,7 @@ class Endpoint:
 
 @dataclass
 class Net:
+    index: int
     line: int
     name: str
     endpoint_pairs: list[tuple[int, int]]
@@ -163,6 +164,18 @@ def integer_field(block: str, name: str) -> int | None:
     return int(match.group(1)) if match else None
 
 
+def object_number(block_lines: list[str]) -> int:
+    """Read the object's own Number, never a nested pin/pad Number."""
+    depth = paren_delta(block_lines[0])
+    for line in block_lines[1:]:
+        if depth == 1:
+            match = re.fullmatch(r"\s*\(Number\s+(\d+)\)\s*", line)
+            if match:
+                return int(match.group(1))
+        depth += paren_delta(line)
+    raise ValueError(f"missing or invalid object Number: {block_lines[0].strip()}")
+
+
 def parse_pins(block_lines: list[str]) -> list[Pin]:
     pins: list[Pin] = []
     for _, match, pin_lines in iter_blocks(block_lines, PIN_START_RE):
@@ -182,11 +195,16 @@ def parse_pins(block_lines: list[str]) -> list[Pin]:
 
 def parse_parts(lines: list[str]) -> list[Part]:
     parts: list[Part] = []
+    numbers: set[int] = set()
     for start, match, block_lines in iter_blocks(lines, PART_START_RE):
         block = "\n".join(block_lines)
+        number = object_number(block_lines)
+        if number in numbers:
+            raise ValueError(f"duplicate Part Number {number} at line {start + 1}")
+        numbers.add(number)
         parts.append(
             Part(
-                index=len(parts),
+                index=number,
                 line=start + 1,
                 library_name=match.group(1),
                 ref=match.group(2),
@@ -202,15 +220,22 @@ def parse_parts(lines: list[str]) -> list[Part]:
 
 def parse_nets(lines: list[str], parts: list[Part]) -> list[Net]:
     nets: list[Net] = []
+    parts_by_number = {part.index: part for part in parts}
+    numbers: set[int] = set()
     for start, match, block_lines in iter_blocks(lines, NET_START_RE):
+        number = object_number(block_lines)
+        if number in numbers:
+            raise ValueError(f"duplicate Net Number {number} at line {start + 1}")
+        numbers.add(number)
         pairs = [
             (int(m.group(1)), int(m.group(2)))
-            for line in block_lines
+            for _, _, member_lines in iter_blocks(block_lines, re.compile(r"^\s+\(Parts\s*$"))
+            for line in member_lines
             if (m := ENDPOINT_RE.match(line))
         ]
         endpoints: list[Endpoint] = []
         for part_index, pin_ordinal in pairs:
-            part = parts[part_index] if 0 <= part_index < len(parts) else None
+            part = parts_by_number.get(part_index)
             pin = None
             if part:
                 pin = next((candidate for candidate in part.pins if candidate.ordinal == pin_ordinal), None)
@@ -224,7 +249,7 @@ def parse_nets(lines: list[str], parts: list[Part]) -> list[Net]:
                     pin_name=pin.name if pin else None,
                 )
             )
-        nets.append(Net(line=start + 1, name=match.group(1), endpoint_pairs=pairs, endpoints=endpoints))
+        nets.append(Net(index=number, line=start + 1, name=match.group(1), endpoint_pairs=pairs, endpoints=endpoints))
     return nets
 
 
@@ -261,6 +286,20 @@ def inspect(path: Path) -> dict[str, Any]:
             }
         )
     unresolved = [asdict(endpoint) for net in nets for endpoint in net.endpoints if endpoint.ref is None or endpoint.string_number is None]
+    memberships: dict[tuple[int, int], list[int]] = {}
+    for net in nets:
+        for pair in net.endpoint_pairs:
+            memberships.setdefault(pair, []).append(net.index)
+    net_number_mismatches = []
+    for part in parts:
+        for pin in part.pins:
+            expected = [] if pin.net_number == -1 else [pin.net_number]
+            actual = memberships.get((part.index, pin.ordinal), [])
+            if expected != actual:
+                net_number_mismatches.append({
+                    "part_index": part.index, "ref": part.ref,
+                    "pin_ordinal": pin.ordinal, "declared": expected, "resolved": actual,
+                })
     return {
         "path": str(path.resolve()),
         "sha256": hashlib.sha256(data).hexdigest().upper(),
@@ -274,6 +313,7 @@ def inspect(path: Path) -> dict[str, Any]:
         "nets": nets,
         "cyrillic": cyrillic,
         "unresolved_endpoints": unresolved,
+        "net_number_mismatches": net_number_mismatches,
     }
 
 
@@ -283,6 +323,7 @@ def connectivity_signature(result: dict[str, Any]) -> dict[str, Any]:
     return {
         "parts": [
             {
+                "index": part.index,
                 "ref": part.ref,
                 "part_name": part.part_name,
                 "pins": [(pin.ordinal, pin.string_number, pin.name) for pin in part.pins],
@@ -290,7 +331,7 @@ def connectivity_signature(result: dict[str, Any]) -> dict[str, Any]:
             }
             for part in parts
         ],
-        "nets": [(net.name, net.endpoint_pairs) for net in nets],
+        "nets": [(net.index, net.name, net.endpoint_pairs) for net in nets],
     }
 
 
@@ -313,7 +354,7 @@ def print_part(part: Part) -> None:
 
 
 def print_net(net: Net) -> None:
-    print(f"\nNET {net.name!r}  line={net.line} endpoints={len(net.endpoints)}")
+    print(f"\nNET {net.name!r}  index={net.index} line={net.line} endpoints={len(net.endpoints)}")
     for endpoint in net.endpoints:
         label = endpoint.ref or f"part-index:{endpoint.part_index}"
         pin = endpoint.string_number or f"ordinal:{endpoint.pin_ordinal}"
@@ -375,6 +416,7 @@ def main() -> int:
         print(
             f"Placed parts: {len(result['parts'])}  nets: {len(result['nets'])}  "
             f"unresolved endpoints: {len(result['unresolved_endpoints'])}  "
+            f"net-number mismatches: {len(result['net_number_mismatches'])}  "
             f"Cyrillic lines: {len(result['cyrillic'])}"
         )
         if args.compare:
@@ -407,10 +449,15 @@ def main() -> int:
         or not result["parts"]
         or not result["nets"]
         or bool(result["unresolved_endpoints"])
+        or bool(result["net_number_mismatches"])
         or compare_changed
     )
     return 1 if args.strict and strict_failure else 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except ValueError as error:
+        print(f"error: {error}", file=sys.stderr)
+        raise SystemExit(2)

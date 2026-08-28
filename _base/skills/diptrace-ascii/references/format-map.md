@@ -29,6 +29,7 @@ A placed instance begins approximately as:
 
 ```text
     (Part "library-name" "C1"
+      (Number 3)
       (Value "100 uF, 25 V")
       ...
       (PartName "Part 1")
@@ -38,8 +39,8 @@ A placed instance begins approximately as:
 
 Important rules:
 
-- The order of top-level `Part` blocks is significant. Net endpoints refer to this zero-based order.
-- A multipart component can have several top-level `Part` blocks with the same reference designator. Preserve them all and distinguish them by instance index and `PartName`.
+- Each placed `Part` has its own direct-child `(Number N)`. Net endpoints refer to this object ID, not the block's position in the file. IDs may have gaps after deletions; build a dictionary keyed by `Number`. Do not silently fall back to list order when an ID is missing or duplicated.
+- A multipart component can have several top-level `Part` blocks with the same reference designator. Preserve them all and distinguish them by object `Number` and `PartName`.
 - Fields such as `Value`, `BaseName`, `Manufacturer`, `Datasheet`, and user fields may disagree. Such disagreement is a BOM/library defect even when connectivity is correct.
 - `LibPath` and `LibPath_Variable` are provenance/path metadata. Historical Cyrillic text in a path is not a Cyrillic component name.
 
@@ -65,7 +66,7 @@ Interpret the identifiers separately:
 - `Number` is a numeric pin field and is not always sufficient for alphanumeric pin numbers;
 - `StringNumber` is the authoritative displayed/physical symbol pin number;
 - `Name` gives the pin function;
-- `NetNumber` is useful for cross-checking but should not replace endpoint reconstruction.
+- `NetNumber` refers to the net's own direct-child `(Number N)`, not its position in the list; `-1` means unconnected. Cross-check it against endpoint reconstruction.
 
 Never report `pt 1 1` as physical pin 1 without resolving ordinal 1 through that part's pin block.
 
@@ -75,6 +76,7 @@ A net contains an endpoint list:
 
 ```text
     (Net "{VIN}"
+      (Number 26)
       ...
       (Parts
         (pt 3 0)
@@ -86,12 +88,14 @@ A net contains an endpoint list:
 
 For endpoint `(pt A B)`:
 
-- `A` is the zero-based index of a top-level placed `Part` block;
+- `A` is the direct-child `Number` of a top-level placed `Part` block;
 - `B` is that part's zero-based `Pin` ordinal;
 - resolve `A` to the placed reference and `B` to `StringNumber` plus `Name`;
 - repeated references from multipart units are expected and must not be deduplicated prematurely.
 
 Other `(pt ...)` records occur in line and shape geometry and can contain coordinates. Only the two-integer records inside a net's `Parts` subsection are electrical endpoints.
+
+The inspector exposes these explicit object IDs as `Part.index` and `Net.index`. Never replace them with `enumerate(...)` in downstream scripts. A sudden set of unresolved endpoints after deleting a component warrants checking ID handling before reporting schematic faults.
 
 ## Footprint Pads
 
