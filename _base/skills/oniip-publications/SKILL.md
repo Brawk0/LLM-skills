@@ -11,7 +11,7 @@ IV Международная научная конференция «Радио
 
 Sections: 1) физика излучения и распространения радиоволн, ионосфера; 2) радиофизические и электрофизические методы исследования свойств вещества, дистанционное зондирование Земли; 3) моделирование радиофизических процессов и систем; 4) функциональная электроника и фотоника.
 
-Abstracts go into an open-access collection on oniip.ru before the conference and into eLibrary/РИНЦ within three months. **Expanded versions of the talks are published as articles in «Техника радиосвязи» — Перечень ВАК and Белый список** — after peer review, sent to `trs@oniip.ru` with the subject «Статья по докладу». The journal has its own rules page; download and digest it before formatting an article, it is NOT covered by the abstract rules below.
+Abstracts go into an open-access collection on oniip.ru before the conference and into eLibrary/РИНЦ within three months. **Expanded versions of the talks are published as articles in «Техника радиосвязи» — Перечень ВАК and Белый список** — after peer review, sent to `trs@oniip.ru` with the subject «Статья по докладу». Its rules are a separate section at the end of this skill; they differ from the abstract rules in almost every parameter, so do not carry one over to the other.
 
 Submission of abstracts: `conf@oniip.ru`, subject «РФИВ-2026», together with a scanned экспертное заключение о возможности опубликования в открытой печати. Participation is free; travel and accommodation are not. Registration through the banner «РФИВ-2026» on oniip.ru.
 
@@ -105,6 +105,7 @@ Since formulas and tables are banned, plan the two figures as the entire quantit
 
 1. Download the current rules and template from oniip.ru — they change between editions. Copies of the 2026 files are in `assets/`.
 2. Draft the body in plain text first, then check it against the prohibition list before formatting.
+2a. **Run `ru-language-purity` over the Russian text before building the DOCX**, both here and for «Техника радиосвязи». Text written from an English-language literature base inherits calques silently: `nonvolatile` came out as «нелетучий» instead of the established «энергонезависимый», and it reached the built file because the language pass was skipped (user correction, 28.08.2026). Check the vault's own translated conspects for the accepted Russian term before coining one.
 3. Build the DOCX from the official template rather than restyling your own file: the template already carries A4, 2 cm margins, Cambria and the superscript affiliation pattern.
 4. Fill both language blocks. The English block is not optional and is formatted identically.
 5. Insert at most two figures with captions typed in the text.
@@ -124,6 +125,39 @@ Since formulas and tables are banned, plan the two figures as the entire quantit
 - [ ] Рисунков не больше двух, на каждый есть ссылка «(рис. N)», подписи текстом по центру 11 пт, отступы 6 пунктов соблюдены.
 - [ ] Страницы отрендерены и просмотрены глазами.
 - [ ] Экспертное заключение отсканировано и приложено.
+
+## Journal «Техника радиосвязи»
+
+A different venue with different rules: Перечень ВАК, Белый список, peer-reviewed, **no author fee and no royalties**. Editorial office: 644071, Омск, ул. Масленникова, 231; `trs@oniip.ru`; (3812) 51-49-15. Official rules and the application form are in `assets/`.
+
+The article must be original, unpublished, and not under review elsewhere. Manuscripts that violate the requirements are not considered at all.
+
+**Structure is mandatory and by named subheadings**, e.g. ВВЕДЕНИЕ, ТЕОРЕТИЧЕСКИЙ АНАЛИЗ И МЕТОДИКА, ОПИСАНИЕ ЭКСПЕРИМЕНТА, РЕЗУЛЬТАТЫ И ИХ ОБСУЖДЕНИЕ, ЗАКЛЮЧЕНИЕ, ЛИТЕРАТУРА.
+
+| Параметр | Значение |
+| --- | --- |
+| Размер страницы | A4 |
+| Поля | верхнее 3,8 см, нижнее 2,5 см, правое 2,3 см, левое 2,7 см; до колонтитула сверху 2,3 см, снизу 1,8 см |
+| Гарнитура | Times New Roman, одинарный интервал |
+| Нумерация страниц | сквозная, колонцифра по середине полосы внизу |
+| Объём | не более 14 страниц |
+| УДК | по левому краю без красной строки, 12 пт, прописной |
+| Инициалы и фамилии авторов | по левому краю без отступа, 12 пт, полужирный |
+| Место работы, город, страна | по левому краю без отступа, 12 пт |
+| Заголовок | по центру, 12 пт, полужирный прописной |
+| Аннотация, 500–800 знаков | отступ слева 1 см, без красной строки, по ширине, 11 пт |
+| Ключевые слова, 5–10 | там же, 11 пт |
+| Английский блок | всё перечисленное, кроме УДК, дублируется ниже в том же порядке |
+| Основной текст | красная строка 1 см, 12 пт |
+| Литература | слово `Л И Т Е Р А Т У Р А` по центру вразрядку на 2 пт, 11 пт прописной; ниже сквозной нумерованный список по ГОСТ Р 7.0.5–2008, 11 пт |
+
+Tables: 11 пт обычный, название по центру 11 пт полужирный, головка и боковик 11 пт курсив и без пустых ячеек, сквозная нумерация при числе больше одной, ссылка в тексте обязательна.
+
+Figures: чёткие, контрастные, **подготовленные для чёрно-белой печати**, вставлены без рамки, выполнены в совместимом с Word редакторе, сгруппированы и редактируемы. Подпись по центру 11 пт и **не группируется вместе с рисунком**. Сквозная нумерация при числе больше одного, ссылка в тексте обязательна.
+
+**Formulas are the strictest point.** Отдельной строкой по центру, только в редакторе формул: обычный 12 пт, крупный индекс 8, мелкий индекс 10, крупный символ 18, мелкий символ 12. Латинские буквы курсивом, греческие прямым, сокращения русских слов в индексах прямым. Нумерация в круглых скобках по правому краю; табуляция 8,0 см по центру и 16,0 см по правому краю. **Формулы, набранные в текстовом редакторе, не допускаются** — то есть строка вида `n_eff = 1,887`, набранная обычным текстом, является нарушением. Практический способ выполнить это программно — писать формулы в Markdown как LaTeX и конвертировать `pandoc`, который порождает нативные OMML-объекты Word, а не текст.
+
+Submission package: рукопись в MS Word и PDF, причём PDF подписан авторами с датой; экспертное заключение о возможности опубликования в открытой печати (скан по почте, оригинал письмом); отдельная страница со сведениями об авторах — фамилия, имя, отчество, место работы полным и сокращённым названием, должность, учёная степень и звание при наличии, телефон, электронная почта, почтовый адрес для внешних авторов. Подача статьи автоматически означает согласие с договором-офертой, размещённым на сайте.
 
 ## Self-Improvement And Publishing
 
