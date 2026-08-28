@@ -137,6 +137,14 @@ the full-path test is a Verilator test, and ModelSim keeps the module-level ones
 where its four states still earn their keep. That is not a preference — it is the
 first place where the two-simulator rule costs more than it returns.
 
+**A copied `.do` carries the old instance name and kills the run.** These files
+add waveform groups by hierarchical path — `sim:/foo_tb/obj_foo/*`. Copy one to a
+new testbench whose instance is called `dut` and ModelSim answers
+`(vish-4014) No objects found matching …`; with `onerror {quit -code 1}` in the
+script that ends the whole run, so the testbench reports FAIL while Verilator
+reports PASS. Nothing is wrong with the design. Delete the inner `add wave` lines
+or fix the path when copying — the top-level `sim:/<tb>/*` line is enough.
+
 **Making a testbench self-checking is a PAIR of changes, not one.** The `$finish`
 goes in the testbench; the `.do` must switch from a fixed `run 2400` to `run -all`
 at the same time. Otherwise ModelSim stops mid-run and prints no verdict while
