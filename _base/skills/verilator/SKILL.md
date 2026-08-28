@@ -136,6 +136,29 @@ the full-path test is a Verilator test, and ModelSim keeps the module-level ones
 where its four states still earn their keep. That is not a preference — it is the
 first place where the two-simulator rule costs more than it returns.
 
+**Measure the distance, do not estimate it.** `sweep_verilator.sh` on the
+`feat/clk-300mhz` branch runs every `*_tb.sv` through Verilator and sorts the
+outcome into five buckets — builds and passes, builds and fails, builds without a
+verdict, times out, does not build — and for the last bucket it names the cause
+from the log. First run, 28.08.2026, 213 testbenches: 84 built, 27 gave a PASS.
+The cause histogram is what makes the number useful:
+
+    20  fork around a ref argument, all from one shared file
+    23  rotten include paths — the file moved or was deleted
+     6  default value on a module input
+     5  module name differs from the file name
+    ~75 long tail
+
+Fixing the first cause alone moved thirteen testbenches out of «does not build»,
+and fixing the top-module lookup in the runner covered five more. **Attack the
+histogram, not individual testbenches.**
+
+The measurement also settles what the real obstacle is. It is not Verilator:
+fifty-two testbenches build and run but never end, because they were written to
+be watched as waveforms and have no `$finish` and no self-check at all. Until
+those become self-checking, dropping ModelSim gains nothing on them — there is no
+verdict to compare in either simulator. That is the work, and it is countable.
+
 **The direction of travel is away from ModelSim.** It is the reference today
 only because the design was written against it. Every divergence found is
 recorded here with the measurement that settled it, and when the list stops
