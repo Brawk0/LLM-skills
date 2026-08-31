@@ -1,0 +1,4 @@
+interface:
+  display_name: "Schematic BOM Export"
+  short_description: "Make the assembly BOM note and print PDF from BoM.csv"
+  default_prompt: "Use $schematic-bom-export to build the Markdown BOM note and print-ready PDF from this board's BoM.csv export."
