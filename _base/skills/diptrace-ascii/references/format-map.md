@@ -107,7 +107,7 @@ Footprint data embedded in a placed component can contain records like:
 
 The first integer is a pad-object ordinal; the first quoted string is the physical pad number. Check the quoted pad-number set when validating a package. A 28-lead symbol named for an exposed-pad package does not prove that pad 29 or an unnamed thermal pad exists.
 
-Also inspect `IntCon` or equivalent internal-connect records. An exposed thermal pad must have both geometry and the intended electrical connection; a symbol-side ground pin cannot substitute for missing package copper. `(IntCon 7 9)` binding pad 9 to the GND pad is what makes an ESOP-8 thermal pad netted; `(IntCon 1 2)` merges the two anode pads of a PowerDI-5 diode.
+Also inspect `IntCon` or equivalent internal-connect records. Its integers refer to **pad-object ordinals** (the first integer in each `(Pad ...)` record), not to the quoted physical pad numbers. Resolve both operands through the footprint's `Pad` records before assigning a net or deciding that a symbol pin is missing. Follow chains of internal connections too: an exposed thermal pad or extra connector tab may inherit a net from a numbered symbol pad. Confirm the physical pad exists and reaches the intended net; a symbol-side ground pin alone cannot substitute for package copper.
 
 ### Judging a land pattern by geometry, not by its name
 
