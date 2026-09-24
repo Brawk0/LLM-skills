@@ -58,7 +58,8 @@ The script is intentionally read-only. It reports encoding, line endings, balanc
 - Never infer pin identity from the visual order. Use `StringNumber` and the net endpoint's pin ordinal.
 - Never identify a component by eye-scanning a long net member list — adjacent references such as `VD5`/`VD6` are trivially transposed, and a wrong reading produces a confident but false finding. Resolve every claim through `--ref` / `--net` or the net number before writing it down.
 - A part block contains **two** `UserFields` blocks: the component's own, then a copy inside the embedded `Pattern`. Read the first block after `(Part`. Collapsing all `UserField` lines of a part into one dict silently keeps the footprint copy and misreports the component's supplier data.
-- DipTrace re-annotates reference designators between exports. Diff two revisions by function and net membership, not by refdes.
+- The importer turns every `!` into a space, even from a clean same-codepage file, so a `NC!!!___` do-not-populate marker edited only in the ASCII does not survive import. Tell the user to restore such markers inside DipTrace after import and to check the next export or BoM.
+- DipTrace re-annotates reference designators between exports. Diff two revisions by function and net membership, not by refdes; the matching method is in [references/format-map.md](references/format-map.md).
 - Never infer an exposed thermal pad from a package name. Verify an actual `Pad` entry and its electrical or internal connection.
 - Keep an original hash or recoverable pre-edit copy until the edited file passes structural comparison and an application-level import check.
 

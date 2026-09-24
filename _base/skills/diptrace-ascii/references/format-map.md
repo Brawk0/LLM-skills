@@ -8,7 +8,7 @@ Use this reference when reconstructing or editing a DipTrace Schematic ASCII `.a
 - Exports may use Windows-1251 and CRLF without a BOM. Encoding and newline style are part of the artifact and must be fingerprinted before editing.
 - **The importer ignores a UTF-8 BOM and decodes the file as a single-byte codepage.** Converting the document to UTF-8 therefore does not gain Unicode — it corrupts every non-ASCII character in the file, because each multi-byte sequence is read back as one character per byte. Observed on a v45 round-trip: `Ω` (`CE A9`) → `О©`, `µ` (`C2 B5`) → `Вµ`, the sheet name `Лист 1` → `Р›РёСЃС‚ 1`, and Cyrillic `LibPath` values likewise. Keep the source encoding; verify with a strict re-encode before writing.
 - Windows-1251 cannot encode the Greek omega `Ω`, so an ASCII exchange file writes ohms as `Ohm` / `kOhm` / `MOhm`. The glyph belongs in the `.dch`, set there after import; the project's own CSV/ASCII exports will still render it `?`, which is a limitation of those exports rather than a defect.
-- A corrupted round-trip can damage more than the encoding: in the same v45 test the `!` characters vanished from most strings, breaking a `NC!!!___` do-not-populate marker. A clean same-codepage round-trip preserved them. Re-check any marker built from punctuation after every import.
+- **The importer replaces every `!` with a space.** This was first seen alongside the encoding corruption above. It happened again in 2026-09 on a clean Windows-1251/CRLF v45 file: all 144 `!` in values and user fields came back as spaces, so `NC!!!___` became `NC   ___`. DipTrace's own export kept `!` intact, so the loss is on import. Restoring the marker in the ASCII does not help, because the next import strips it again. Re-enter punctuation-based markers inside DipTrace after every import and check the next export, or use a marker without `!`.
 - Parentheses inside quoted strings are data, not tree delimiters. A validator must ignore quoted content and escaped quotes while calculating depth.
 - Paths can contain spaces, non-ASCII text, drive letters, UNC prefixes, and backslashes. Do not normalize them as component text.
 
@@ -138,3 +138,12 @@ For a text-only edit, compare before and after:
 - requested old/new string counts.
 
 A matching byte count is neither required nor sufficient. A changed file size is normal after transliteration; unchanged connectivity signatures are the relevant proof.
+
+### Comparing Two Exports After Re-annotation
+
+DipTrace may renumber most reference designators between exports, and a per-refdes diff then reports hundreds of false changes. Match placed units by function instead:
+
+1. exact match on `Name`, section (`PartName`) and the set of `StringNumber` → net-name pairs;
+2. for the rest, the same `Name` and section with the largest net overlap.
+
+Parallel passives on the same net pair are interchangeable, so compare the multiset of `Value` per net pair rather than unit by unit. Otherwise two swapped decoupling capacitors look like two value changes. Finally, compare each net's membership through the resulting refdes map. When every old unit is matched and only a few nets gained members, the edit between the exports was attribute-only apart from those additions.

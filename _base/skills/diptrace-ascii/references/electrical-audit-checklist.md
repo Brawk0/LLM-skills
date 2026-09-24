@@ -82,6 +82,8 @@ Weight the fields by whether they actually reach a purchaser:
 
 Read the ordering code itself rather than trusting the human-readable half beside it. In the IEC 60062 R-notation used by Yageo and others the letter is the decimal point: `RC0603FR-074K7L` is 4,7 kΩ while `RC0603FR-0747KL` is 47 kΩ. A one-character slip silently ships the wrong decade — check the code against the stated value on every edited resistor.
 
+Decode a capacitor's rated voltage from its code the same way. Yageo `CC` puts it in the character before `BB`/`BN`: `5` = 6,3 V, `6` = 10 V, `7` = 16 V, `8` = 25 V, `9` = 50 V, `0` = 100 V, `Y` = 250 V. Murata `GRM` uses `0J` = 6,3 V, `1A` = 10 V, `1C` = 16 V, `1E` = 25 V, `1H` = 50 V, `2A` = 100 V, `2E` = 250 V. `CC1206KKX5R8BB106` labelled `50 V` is a 25 V part; this mislabel has recurred across boards, so check every capacitor, not only edited ones.
+
 An orderable code needs its package and packaging suffix. A bare family name such as `UC2845B` is not orderable; `UC2845BD8G` is.
 
 ### Proving a ground-domain split
