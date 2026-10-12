@@ -1,0 +1,4 @@
+interface:
+  display_name: "DipTrace Component Library"
+  short_description: "Build symbols, footprints and STEP models"
+  default_prompt: "Use $diptrace-component-library to create and verify a DipTrace component with a schematic symbol, footprint and STEP model."
